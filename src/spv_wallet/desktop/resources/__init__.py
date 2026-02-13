@@ -1,0 +1,1 @@
+"""Desktop resources — icons, stylesheets."""

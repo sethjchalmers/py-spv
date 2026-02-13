@@ -1,0 +1,212 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "py-spv"
+version = "0.1.0"
+description = "Python feature-parity SPV Wallet for BSV Blockchain — server + desktop"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+authors = [{ name = "py-spv contributors" }]
+keywords = ["bsv", "bitcoin", "spv", "wallet", "blockchain"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Framework :: FastAPI",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Office/Business :: Financial",
+]
+
+dependencies = [
+    # Web framework & API
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "pydantic>=2.10",
+    "pydantic-settings>=2.6",
+
+    # Database
+    "sqlalchemy[asyncio]>=2.0",
+    "alembic>=1.14",
+    "asyncpg>=0.30",
+    "aiosqlite>=0.20",
+
+    # Caching
+    "redis[hiredis]>=5.0",
+
+    # HTTP client
+    "httpx>=0.28",
+
+    # Task queue
+    "arq>=0.26",
+
+    # Logging
+    "structlog>=24.0",
+
+    # Config file support
+    "PyYAML>=6.0",
+
+    # BSV cryptographic primitives
+    "ecdsa>=0.19",
+
+    # Metrics
+    "prometheus-client>=0.21",
+]
+
+[project.optional-dependencies]
+desktop = [
+    "PySide6>=6.7",
+    "qrcode[pil]>=8.0",
+    "Pillow>=11.0",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "pytest-cov>=6.0",
+    "pytest-httpx>=0.35",
+    "factory-boy>=3.3",
+    "ruff>=0.8",
+    "mypy>=1.13",
+    "pre-commit>=4.0",
+    "sqlalchemy[mypy]>=2.0",
+    "types-redis>=4.6",
+]
+all = ["py-spv[desktop,dev]"]
+
+[project.urls]
+Homepage = "https://github.com/your-org/py-spv"
+Documentation = "https://github.com/your-org/py-spv/blob/main/CONTEXT.md"
+Repository = "https://github.com/your-org/py-spv"
+Issues = "https://github.com/your-org/py-spv/issues"
+
+[project.scripts]
+py-spv = "spv_wallet.main:main"
+py-spv-desktop = "spv_wallet.desktop.app:main"
+
+# ---------------------------------------------------------------------------
+# Hatch (build)
+# ---------------------------------------------------------------------------
+[tool.hatch.build.targets.wheel]
+packages = ["src/spv_wallet"]
+
+# ---------------------------------------------------------------------------
+# Ruff (lint + format)
+# ---------------------------------------------------------------------------
+[tool.ruff]
+target-version = "py312"
+src = ["src", "tests"]
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "A",    # flake8-builtins
+    "C4",   # flake8-comprehensions
+    "DTZ",  # flake8-datetimez
+    "T20",  # flake8-print
+    "SIM",  # flake8-simplify
+    "TCH",  # flake8-type-checking
+    "RUF",  # ruff-specific rules
+    "S",    # flake8-bandit (security)
+    "ASYNC",# flake8-async
+    "PTH",  # flake8-use-pathlib
+]
+ignore = [
+    "S101",  # allow assert in tests
+    "B008",  # allow Depends() in function args (FastAPI pattern)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["spv_wallet"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101", "S106", "T20"]
+
+# ---------------------------------------------------------------------------
+# Mypy
+# ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+plugins = ["pydantic.mypy", "sqlalchemy.ext.mypy.plugin"]
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+disallow_untyped_defs = false
+allow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = ["arq.*", "qrcode.*"]
+ignore_missing_imports = true
+
+# ---------------------------------------------------------------------------
+# Pytest
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+    "-q",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks integration tests requiring external services",
+    "desktop: marks desktop GUI tests requiring PySide6",
+]
+filterwarnings = [
+    "error",
+    "ignore::DeprecationWarning:sqlalchemy.*",
+]
+
+# ---------------------------------------------------------------------------
+# Coverage
+# ---------------------------------------------------------------------------
+[tool.coverage.run]
+source = ["spv_wallet"]
+branch = true
+omit = [
+    "*/desktop/*",
+    # Phase 2+ stubs – no logic to test yet
+    "*/api/dependencies.py",
+    "*/api/middleware/*",
+    "*/api/paymail_server/*",
+    "*/api/v1/*",
+    "*/api/v2/*",
+    "*/cache/*",
+    "*/chain/*",
+    "*/engine/options.py",
+    "*/engine/services/*",
+    "*/engine/v2/*",
+    "*/notifications/*",
+    "*/paymail/*",
+    "*/taskmanager/*",
+    "*/utils/helpers.py",
+    "*/bsv/merkle.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.",
+    "@overload",
+    "raise NotImplementedError",
+]
