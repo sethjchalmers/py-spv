@@ -53,5 +53,8 @@ Thumbs.db
 # Docker
 docker-compose.override.yml
 
+# Internal docs
+CONTEXT.md
+
 # Alembic
 alembic/versions/*.pyc
