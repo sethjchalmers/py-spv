@@ -189,19 +189,16 @@ omit = [
     "*/api/v1/*",
     "*/api/v2/*",
     "*/cache/redis.py",
-    "*/chain/*",
     "*/engine/options.py",
     "*/engine/services/admin_service.py",
     "*/engine/services/contact_service.py",
     "*/engine/services/notification_service.py",
     "*/engine/services/paymail_service.py",
-    "*/engine/services/transaction_service.py",
     "*/engine/v2/*",
     "*/notifications/*",
     "*/paymail/*",
     "*/taskmanager/*",
     "*/utils/helpers.py",
-    "*/bsv/merkle.py",
 ]
 
 [tool.coverage.report]

@@ -6,10 +6,12 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from spv_wallet.cache.client import CacheClient
+    from spv_wallet.chain.service import ChainService
     from spv_wallet.config.settings import AppConfig
     from spv_wallet.datastore.client import Datastore
     from spv_wallet.engine.services.access_key_service import AccessKeyService
     from spv_wallet.engine.services.destination_service import DestinationService
+    from spv_wallet.engine.services.transaction_service import TransactionService
     from spv_wallet.engine.services.utxo_service import UTXOService
     from spv_wallet.engine.services.xpub_service import XPubService
 
@@ -33,7 +35,7 @@ class SPVWalletEngine:
         # Infrastructure components
         self._datastore: Datastore | None = None
         self._cache: CacheClient | None = None
-        # self._chain = None  # Phase 3
+        self._chain: ChainService | None = None
         # self._task_manager = None  # Phase 7
 
         # Services
@@ -41,9 +43,7 @@ class SPVWalletEngine:
         self._destination_service: DestinationService | None = None
         self._utxo_service: UTXOService | None = None
         self._access_key_service: AccessKeyService | None = None
-        # self._paymail_service = None  # Phase 4
-        # self._contact_service = None  # Phase 4
-        # self._transaction_service = None  # Phase 3
+        self._transaction_service: TransactionService | None = None
 
     async def initialize(self) -> None:
         """Initialize datastore, run migrations, and start services.
@@ -75,6 +75,7 @@ class SPVWalletEngine:
         # Initialize services
         from spv_wallet.engine.services.access_key_service import AccessKeyService
         from spv_wallet.engine.services.destination_service import DestinationService
+        from spv_wallet.engine.services.transaction_service import TransactionService
         from spv_wallet.engine.services.utxo_service import UTXOService
         from spv_wallet.engine.services.xpub_service import XPubService
 
@@ -82,8 +83,18 @@ class SPVWalletEngine:
         self._destination_service = DestinationService(self)
         self._utxo_service = UTXOService(self)
         self._access_key_service = AccessKeyService(self)
+        self._transaction_service = TransactionService(self)
 
-        # TODO Phase 3: Initialize chain service
+        # Initialize chain service (ARC + BHS)
+        from spv_wallet.chain.service import ChainService
+
+        self._chain = ChainService(self._config)
+        try:
+            await self._chain.connect()
+        except Exception:  # noqa: BLE001
+            # Chain service is optional — engine works without it
+            self._chain = None
+
         # TODO Phase 7: Initialize task manager
 
         self._initialized = True
@@ -97,10 +108,16 @@ class SPVWalletEngine:
             return
 
         # Tear down services
+        self._transaction_service = None
         self._xpub_service = None
         self._destination_service = None
         self._utxo_service = None
         self._access_key_service = None
+
+        # Close chain service
+        if self._chain is not None:
+            await self._chain.close()
+            self._chain = None
 
         # Close cache
         if self._cache is not None:
@@ -112,7 +129,6 @@ class SPVWalletEngine:
             await self._datastore.close()
             self._datastore = None
 
-        # TODO Phase 3: Close chain service
         # TODO Phase 7: Close task manager
 
         self._initialized = False
@@ -189,6 +205,22 @@ class SPVWalletEngine:
             raise RuntimeError(msg)
         return self._access_key_service
 
+    @property
+    def transaction_service(self) -> TransactionService:
+        """Get the transaction service."""
+        if self._transaction_service is None:
+            msg = "Engine not initialized. Call initialize() first."
+            raise RuntimeError(msg)
+        return self._transaction_service
+
+    @property
+    def chain_service(self) -> ChainService | None:
+        """Get the chain service (ARC + BHS).
+
+        Returns None if chain service is not available (optional dependency).
+        """
+        return self._chain
+
     async def health_check(self) -> dict[str, str]:
         """Check health status of all engine components.
 
@@ -199,6 +231,7 @@ class SPVWalletEngine:
             "engine": "ok" if self._initialized else "not_initialized",
             "datastore": "unknown",
             "cache": "unknown",
+            "chain": "unknown",
         }
 
         if self._initialized:
@@ -213,6 +246,12 @@ class SPVWalletEngine:
                 status["cache"] = "ok"
             else:
                 status["cache"] = "error"
+
+            # Check chain
+            if self._chain and self._chain.is_connected:
+                status["chain"] = "ok"
+            else:
+                status["chain"] = "not_connected"
 
         return status
 

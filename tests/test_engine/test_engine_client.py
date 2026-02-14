@@ -80,6 +80,51 @@ class TestSPVWalletEngine:
         status = await engine.health_check()
         assert status["engine"] == "not_initialized"
 
+    async def test_transaction_service_before_init(self) -> None:
+        """Accessing transaction_service before init raises RuntimeError."""
+        config = AppConfig()
+        engine = SPVWalletEngine(config)
+
+        with pytest.raises(RuntimeError, match="not initialized"):
+            _ = engine.transaction_service
+
+    async def test_transaction_service_after_init(self) -> None:
+        """transaction_service is available after init."""
+        config = AppConfig(
+            db=DatabaseConfig(engine="sqlite", dsn="sqlite+aiosqlite:///:memory:")
+        )
+        engine = SPVWalletEngine(config)
+        await engine.initialize()
+        assert engine.transaction_service is not None
+        await engine.close()
+
+    async def test_chain_service_before_init(self) -> None:
+        """chain_service is None before init."""
+        config = AppConfig()
+        engine = SPVWalletEngine(config)
+        assert engine.chain_service is None
+
+    async def test_chain_service_after_init(self) -> None:
+        """chain_service may or may not be available after init."""
+        config = AppConfig(
+            db=DatabaseConfig(engine="sqlite", dsn="sqlite+aiosqlite:///:memory:")
+        )
+        engine = SPVWalletEngine(config)
+        await engine.initialize()
+        # chain_service can be a ChainService or None depending on
+        # whether ARC/BHS connect successfully in the test environment
+        await engine.close()
+
+    async def test_health_check_includes_chain(self) -> None:
+        """Health check includes chain status."""
+        config = AppConfig(
+            db=DatabaseConfig(engine="sqlite", dsn="sqlite+aiosqlite:///:memory:")
+        )
+        engine = SPVWalletEngine(config)
+        await engine.initialize()
+        status = await engine.health_check()
+        assert "chain" in status
+        await engine.close()
     async def test_health_check_initialized(self) -> None:
         """Health check after init shows all ok."""
         config = AppConfig(
