@@ -7,10 +7,10 @@ from typing import Any
 from sqlalchemy import JSON, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from spv_wallet.engine.models.base import Base, MetadataMixin, TimestampMixin
+from spv_wallet.engine.models.base import Base, MetadataMixin, ModelOps, TimestampMixin
 
 
-class Destination(Base, TimestampMixin, MetadataMixin):
+class Destination(Base, TimestampMixin, MetadataMixin, ModelOps):
     """A derived P2PKH address (BIP32 chain + index) with its locking script.
 
     Each destination is associated with an xPub and tracks the BIP32

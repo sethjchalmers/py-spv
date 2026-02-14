@@ -54,7 +54,8 @@ class TestDefaults:
     def test_cache_defaults(self) -> None:
         cfg = CacheConfig()
         assert cfg.engine == CacheEngine.MEMORY
-        assert cfg.redis_url == "redis://localhost:6379/0"
+        assert cfg.url == "redis://localhost:6379/0"
+        assert cfg.max_connections == 10
         assert cfg.ttl_seconds == 300
 
     def test_arc_defaults(self) -> None:

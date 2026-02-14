@@ -7,10 +7,10 @@ from typing import Any
 from sqlalchemy import JSON, BigInteger, Boolean, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from spv_wallet.engine.models.base import Base, MetadataMixin, TimestampMixin
+from spv_wallet.engine.models.base import Base, MetadataMixin, ModelOps, TimestampMixin
 
 
-class TransactionRecord(Base, TimestampMixin, MetadataMixin):
+class Transaction(Base, TimestampMixin, MetadataMixin, ModelOps):
     """A recorded transaction with hex, BEEF, block info, and status.
 
     Stores the full transaction lifecycle data including broadcast

@@ -100,7 +100,8 @@ class CacheConfig(BaseSettings):
         default=CacheEngine.MEMORY,
         description="Cache backend: memory or redis",
     )
-    redis_url: str = "redis://localhost:6379/0"
+    url: str = "redis://localhost:6379/0"
+    max_connections: int = 10
     ttl_seconds: int = 300
 
 

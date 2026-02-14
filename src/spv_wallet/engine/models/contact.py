@@ -5,10 +5,10 @@ from __future__ import annotations
 from sqlalchemy import String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from spv_wallet.engine.models.base import Base, MetadataMixin, TimestampMixin
+from spv_wallet.engine.models.base import Base, MetadataMixin, ModelOps, TimestampMixin
 
 
-class Contact(Base, TimestampMixin, MetadataMixin):
+class Contact(Base, TimestampMixin, MetadataMixin, ModelOps):
     """A paymail-based contact with confirmation/trust status.
 
     Contacts are discovered and exchanged via the PIKE protocol.

@@ -5,10 +5,10 @@ from __future__ import annotations
 from sqlalchemy import String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from spv_wallet.engine.models.base import Base, MetadataMixin, TimestampMixin
+from spv_wallet.engine.models.base import Base, MetadataMixin, ModelOps, TimestampMixin
 
 
-class AccessKey(Base, TimestampMixin, MetadataMixin):
+class AccessKey(Base, TimestampMixin, MetadataMixin, ModelOps):
     """Ephemeral key pair for API authentication (alternative to full xPub auth).
 
     The ``key`` column stores the compressed public key hex, while the private

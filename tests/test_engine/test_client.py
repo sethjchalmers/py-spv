@@ -15,7 +15,7 @@ def test_engine_can_be_instantiated(app_config):
 
 @pytest.mark.asyncio
 async def test_engine_initialise_and_close(app_config):
-    """Engine initialise/close lifecycle should not raise."""
+    """Engine initialize/close lifecycle should not raise."""
     engine = SPVWalletEngine(config=app_config)
-    await engine.initialise()
+    await engine.initialize()
     await engine.close()

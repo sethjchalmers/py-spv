@@ -7,10 +7,10 @@ from typing import Any
 from sqlalchemy import JSON, BigInteger, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from spv_wallet.engine.models.base import Base, MetadataMixin, TimestampMixin
+from spv_wallet.engine.models.base import Base, MetadataMixin, ModelOps, TimestampMixin
 
 
-class DraftTransaction(Base, TimestampMixin, MetadataMixin):
+class DraftTransaction(Base, TimestampMixin, MetadataMixin, ModelOps):
     """An unsigned transaction template with full configuration.
 
     Stores the draft's inputs, outputs, fee computation, and change

@@ -7,10 +7,10 @@ from typing import Any
 from sqlalchemy import BigInteger, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from spv_wallet.engine.models.base import Base, MetadataMixin, TimestampMixin
+from spv_wallet.engine.models.base import Base, MetadataMixin, ModelOps, TimestampMixin
 
 
-class Xpub(Base, TimestampMixin, MetadataMixin):
+class Xpub(Base, TimestampMixin, MetadataMixin, ModelOps):
     """Extended public key — primary user identity in V1.
 
     Tracks the xPub's balance and BIP32 derivation counters.

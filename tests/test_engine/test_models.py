@@ -16,8 +16,8 @@ from spv_wallet.engine.models import (
     Destination,
     DraftTransaction,
     PaymailAddress,
-    TransactionRecord,
-    Utxo,
+    Transaction,
+    UTXO,
     Webhook,
     Xpub,
 )
@@ -219,15 +219,15 @@ class TestDraftTransaction:
 
 
 # ---------------------------------------------------------------------------
-# TransactionRecord CRUD
+# Transaction CRUD
 # ---------------------------------------------------------------------------
 
 
-class TestTransactionRecord:
-    """TransactionRecord model operations."""
+class TestTransaction:
+    """Transaction model operations."""
 
     async def test_create_transaction(self, session: AsyncSession) -> None:
-        tx = TransactionRecord(
+        tx = Transaction(
             id="tx" + "a" * 62,
             xpub_id="x" * 64,
             hex_body="01000000" + "0" * 100,
@@ -240,13 +240,13 @@ class TestTransactionRecord:
         )
         session.add(tx)
         await session.commit()
-        result = await session.get(TransactionRecord, "tx" + "a" * 62)
+        result = await session.get(Transaction, "tx" + "a" * 62)
         assert result is not None
         assert result.status == "broadcast"
         assert result.direction == "outgoing"
 
     async def test_transaction_repr(self) -> None:
-        tx = TransactionRecord(id="tx" + "b" * 62, xpub_id="x" * 64, status="mined")
+        tx = Transaction(id="tx" + "b" * 62, xpub_id="x" * 64, status="mined")
         assert "status=mined" in repr(tx)
 
 
@@ -259,7 +259,7 @@ class TestUtxo:
     """Utxo model operations."""
 
     async def test_create_utxo(self, session: AsyncSession) -> None:
-        utxo = Utxo(
+        utxo = UTXO(
             id="txid:0",
             xpub_id="x" * 64,
             transaction_id="tx" * 32,
@@ -270,13 +270,13 @@ class TestUtxo:
         )
         session.add(utxo)
         await session.commit()
-        result = await session.get(Utxo, "txid:0")
+        result = await session.get(UTXO, "txid:0")
         assert result is not None
         assert result.satoshis == 50000
         assert not result.is_spent
 
     async def test_utxo_is_spent(self) -> None:
-        utxo = Utxo(
+        utxo = UTXO(
             id="txid:1",
             xpub_id="x" * 64,
             transaction_id="tx" * 32,
@@ -288,7 +288,7 @@ class TestUtxo:
         assert utxo.is_spent
 
     async def test_utxo_not_spent(self) -> None:
-        utxo = Utxo(
+        utxo = UTXO(
             id="txid:2",
             xpub_id="x" * 64,
             transaction_id="tx" * 32,
@@ -299,7 +299,7 @@ class TestUtxo:
         assert not utxo.is_spent
 
     async def test_utxo_repr(self) -> None:
-        utxo = Utxo(
+        utxo = UTXO(
             id="test:0",
             xpub_id="x" * 64,
             transaction_id="abcdef1234567890" * 4,
@@ -430,7 +430,7 @@ class TestQueries:
         xpub_id = "x" * 64
         for i in range(3):
             session.add(
-                Utxo(
+                UTXO(
                     id=f"txid:{i}",
                     xpub_id=xpub_id,
                     transaction_id="tx" * 32,
@@ -441,7 +441,7 @@ class TestQueries:
             )
         # Add one for a different xpub
         session.add(
-            Utxo(
+            UTXO(
                 id="other:0",
                 xpub_id="y" * 64,
                 transaction_id="tx" * 32,
@@ -453,7 +453,7 @@ class TestQueries:
         await session.commit()
 
         result = await session.execute(
-            select(Utxo).where(Utxo.xpub_id == xpub_id)
+            select(UTXO).where(UTXO.xpub_id == xpub_id)
         )
         utxos = result.scalars().all()
         assert len(utxos) == 3
