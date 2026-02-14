@@ -6,6 +6,8 @@ from typing import AsyncIterator
 
 import pytest
 
+from spv_wallet.config.settings import DatabaseEngine
+
 
 @pytest.fixture
 def app_config():
@@ -17,7 +19,7 @@ def app_config():
         admin_xpub="xpub_test_admin",
         encryption_key="test-encryption-key-32bytes!!!!!",
         db=DatabaseConfig(
-            engine="sqlite",
+            engine=DatabaseEngine.SQLITE,
             dsn="sqlite+aiosqlite:///:memory:",
         ),
     )

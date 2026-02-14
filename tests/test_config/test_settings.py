@@ -10,6 +10,12 @@ from typing import Any
 import pytest
 
 from spv_wallet.config.settings import (
+    ArcWaitFor,
+    CacheEngine,
+    DatabaseEngine,
+)
+
+from spv_wallet.config.settings import (
     AppConfig,
     ARCConfig,
     ArcWaitFor,
@@ -118,23 +124,23 @@ class TestEnums:
     """Enum fields accept only valid values."""
 
     def test_database_engine_postgresql(self) -> None:
-        cfg = DatabaseConfig(engine="postgresql")
+        cfg = DatabaseConfig(engine=DatabaseEngine.POSTGRESQL)
         assert cfg.engine == DatabaseEngine.POSTGRESQL
 
     def test_database_engine_invalid(self) -> None:
         with pytest.raises(Exception):  # noqa: B017
-            DatabaseConfig(engine="mysql")
+            DatabaseConfig(engine="mysql")  # type: ignore[arg-type]
 
     def test_cache_engine_redis(self) -> None:
-        cfg = CacheConfig(engine="redis")
+        cfg = CacheConfig(engine=CacheEngine.REDIS)
         assert cfg.engine == CacheEngine.REDIS
 
     def test_cache_engine_invalid(self) -> None:
         with pytest.raises(Exception):  # noqa: B017
-            CacheConfig(engine="memcached")
+            CacheConfig(engine="memcached")  # type: ignore[arg-type]
 
     def test_arc_wait_for_valid(self) -> None:
-        cfg = ARCConfig(wait_for="STORED")
+        cfg = ARCConfig(wait_for=ArcWaitFor.STORED)
         assert cfg.wait_for == ArcWaitFor.STORED
 
     def test_arc_wait_for_invalid(self) -> None:
@@ -297,11 +303,11 @@ class TestCustomConstruction:
             encryption_key="key123",
             server=ServerConfig(port=9999, host="127.0.0.1"),
             db=DatabaseConfig(
-                engine="postgresql",
+                engine=DatabaseEngine.POSTGRESQL,
                 dsn="postgresql+asyncpg://localhost/test",
                 table_prefix="app_",
             ),
-            cache=CacheConfig(engine="redis", ttl_seconds=600),
+            cache=CacheConfig(engine=CacheEngine.REDIS, ttl_seconds=600),
         )
         assert cfg.debug is True
         assert cfg.server.port == 9999

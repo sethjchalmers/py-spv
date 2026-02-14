@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from spv_wallet.config.settings import AppConfig, DatabaseConfig
+from spv_wallet.config.settings import AppConfig, DatabaseConfig, DatabaseEngine
 from spv_wallet.engine.client import SPVWalletEngine
 from spv_wallet.engine.services.access_key_service import (
     ErrAccessKeyNotFound,
@@ -16,7 +16,7 @@ _XPUB_ID = "x" * 64
 @pytest.fixture
 async def engine():
     config = AppConfig(
-        db=DatabaseConfig(engine="sqlite", dsn="sqlite+aiosqlite:///:memory:")
+        db=DatabaseConfig(engine=DatabaseEngine.SQLITE, dsn="sqlite+aiosqlite:///:memory:")
     )
     eng = SPVWalletEngine(config)
     await eng.initialize()

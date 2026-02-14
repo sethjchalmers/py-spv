@@ -45,7 +45,7 @@ class ARCService:
         self._client: httpx.AsyncClient | None = None
         self._cached_fee_unit: FeeUnit | None = None
 
-    async def connect(self) -> None:
+    async def connect(self) -> None:  # noqa: ASYNC910
         """Create the underlying HTTP client."""
         headers: dict[str, str] = {
             "Content-Type": "application/json",

@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from spv_wallet.bsv.keys import ExtendedKey, xpub_id
-from spv_wallet.config.settings import AppConfig, DatabaseConfig
+from spv_wallet.config.settings import AppConfig, DatabaseConfig, DatabaseEngine
 from spv_wallet.engine.client import SPVWalletEngine
 from spv_wallet.errors.definitions import ErrInvalidXPub, ErrMissingFieldXPub, ErrXPubNotFound
 
@@ -20,7 +20,7 @@ _XPUB_ID = xpub_id(_XPUB)
 async def engine():
     """Create an initialized engine with in-memory SQLite."""
     config = AppConfig(
-        db=DatabaseConfig(engine="sqlite", dsn="sqlite+aiosqlite:///:memory:")
+        db=DatabaseConfig(engine=DatabaseEngine.SQLITE, dsn="sqlite+aiosqlite:///:memory:")
     )
     eng = SPVWalletEngine(config)
     await eng.initialize()

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from spv_wallet.config.settings import DatabaseConfig
+from spv_wallet.config.settings import DatabaseConfig, DatabaseEngine
 from spv_wallet.datastore.client import Datastore
 from spv_wallet.datastore.engines import create_engine
 from spv_wallet.engine.models.base import Base
@@ -20,7 +20,7 @@ class TestCreateEngine:
 
     async def test_create_sqlite_engine(self) -> None:
         config = DatabaseConfig(
-            engine="sqlite",
+            engine=DatabaseEngine.SQLITE,
             dsn="sqlite+aiosqlite:///:memory:",
         )
         engine = create_engine(config)
@@ -29,7 +29,7 @@ class TestCreateEngine:
 
     async def test_engine_echo_flag(self) -> None:
         config = DatabaseConfig(
-            engine="sqlite",
+            engine=DatabaseEngine.SQLITE,
             dsn="sqlite+aiosqlite:///:memory:",
             debug_sql=True,
         )
@@ -48,7 +48,7 @@ class TestDatastore:
 
     async def test_open_close(self) -> None:
         config = DatabaseConfig(
-            engine="sqlite",
+            engine=DatabaseEngine.SQLITE,
             dsn="sqlite+aiosqlite:///:memory:",
         )
         ds = Datastore(config)
@@ -58,18 +58,18 @@ class TestDatastore:
         await ds.close()
         assert not ds.is_open
 
-    async def test_engine_property_when_closed(self) -> None:
+    async def test_engine_property_when_closed(self) -> None:  # noqa: ASYNC910
         config = DatabaseConfig(
-            engine="sqlite",
+            engine=DatabaseEngine.SQLITE,
             dsn="sqlite+aiosqlite:///:memory:",
         )
         ds = Datastore(config)
         with pytest.raises(RuntimeError, match="not open"):
             _ = ds.engine
 
-    async def test_session_when_closed(self) -> None:
+    async def test_session_when_closed(self) -> None:  # noqa: ASYNC910
         config = DatabaseConfig(
-            engine="sqlite",
+            engine=DatabaseEngine.SQLITE,
             dsn="sqlite+aiosqlite:///:memory:",
         )
         ds = Datastore(config)
@@ -78,7 +78,7 @@ class TestDatastore:
 
     async def test_session_basic_operations(self) -> None:
         config = DatabaseConfig(
-            engine="sqlite",
+            engine=DatabaseEngine.SQLITE,
             dsn="sqlite+aiosqlite:///:memory:",
         )
         ds = Datastore(config)
@@ -93,7 +93,7 @@ class TestDatastore:
 
     async def test_open_creates_tables(self) -> None:
         config = DatabaseConfig(
-            engine="sqlite",
+            engine=DatabaseEngine.SQLITE,
             dsn="sqlite+aiosqlite:///:memory:",
         )
         ds = Datastore(config)
@@ -112,7 +112,7 @@ class TestDatastore:
 
     async def test_table_prefix(self) -> None:
         config = DatabaseConfig(
-            engine="sqlite",
+            engine=DatabaseEngine.SQLITE,
             dsn="sqlite+aiosqlite:///:memory:",
             table_prefix="app_",
         )
@@ -123,7 +123,7 @@ class TestDatastore:
 
     async def test_close_idempotent(self) -> None:
         config = DatabaseConfig(
-            engine="sqlite",
+            engine=DatabaseEngine.SQLITE,
             dsn="sqlite+aiosqlite:///:memory:",
         )
         ds = Datastore(config)
@@ -134,7 +134,7 @@ class TestDatastore:
 
     async def test_session_iterator(self) -> None:
         config = DatabaseConfig(
-            engine="sqlite",
+            engine=DatabaseEngine.SQLITE,
             dsn="sqlite+aiosqlite:///:memory:",
         )
         ds = Datastore(config)
@@ -149,13 +149,13 @@ class TestDatastore:
     async def test_session_iterator_rollback_on_error(self) -> None:
         """Verify session_iterator rolls back on exception."""
         config = DatabaseConfig(
-            engine="sqlite",
+            engine=DatabaseEngine.SQLITE,
             dsn="sqlite+aiosqlite:///:memory:",
         )
         ds = Datastore(config)
         await ds.open(base=Base)
         with pytest.raises(RuntimeError, match="boom"):
-            async for session in ds.session_iterator():
+            async for _ in ds.session_iterator():
                 msg = "boom"
                 raise RuntimeError(msg)
         await ds.close()

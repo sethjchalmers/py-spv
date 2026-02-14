@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from sqlalchemy import select
 
-from spv_wallet.config.settings import AppConfig, DatabaseConfig
+from spv_wallet.config.settings import AppConfig, DatabaseConfig, DatabaseEngine
 from spv_wallet.engine.client import SPVWalletEngine
 from spv_wallet.engine.models.xpub import Xpub
 
@@ -26,7 +26,7 @@ class TestModelOps:
     async def test_model_with_engine(self) -> None:
         """Model can be created with engine reference."""
         config = AppConfig(
-            db=DatabaseConfig(engine="sqlite", dsn="sqlite+aiosqlite:///:memory:")
+            db=DatabaseConfig(engine=DatabaseEngine.SQLITE, dsn="sqlite+aiosqlite:///:memory:")
         )
         engine = SPVWalletEngine(config)
         await engine.initialize()
@@ -45,7 +45,7 @@ class TestModelOps:
     async def test_engine_setter(self) -> None:
         """Engine can be set after model creation."""
         config = AppConfig(
-            db=DatabaseConfig(engine="sqlite", dsn="sqlite+aiosqlite:///:memory:")
+            db=DatabaseConfig(engine=DatabaseEngine.SQLITE, dsn="sqlite+aiosqlite:///:memory:")
         )
         engine = SPVWalletEngine(config)
         await engine.initialize()
@@ -75,7 +75,7 @@ class TestModelOps:
     async def test_not_new_after_persist(self) -> None:
         """Persisted models report is_new=False."""
         config = AppConfig(
-            db=DatabaseConfig(engine="sqlite", dsn="sqlite+aiosqlite:///:memory:")
+            db=DatabaseConfig(engine=DatabaseEngine.SQLITE, dsn="sqlite+aiosqlite:///:memory:")
         )
         engine = SPVWalletEngine(config)
         await engine.initialize()
@@ -113,7 +113,7 @@ class TestModelOps:
     async def test_save_persists_model(self) -> None:
         """save() persists model to database."""
         config = AppConfig(
-            db=DatabaseConfig(engine="sqlite", dsn="sqlite+aiosqlite:///:memory:")
+            db=DatabaseConfig(engine=DatabaseEngine.SQLITE, dsn="sqlite+aiosqlite:///:memory:")
         )
         engine = SPVWalletEngine(config)
         await engine.initialize()
@@ -139,7 +139,7 @@ class TestModelOps:
     async def test_save_updates_existing(self) -> None:
         """save() updates existing model."""
         config = AppConfig(
-            db=DatabaseConfig(engine="sqlite", dsn="sqlite+aiosqlite:///:memory:")
+            db=DatabaseConfig(engine=DatabaseEngine.SQLITE, dsn="sqlite+aiosqlite:///:memory:")
         )
         engine = SPVWalletEngine(config)
         await engine.initialize()
@@ -217,7 +217,7 @@ class TestLifecycleHooks:
     async def test_before_save_called(self) -> None:
         """before_save is called before persist."""
         config = AppConfig(
-            db=DatabaseConfig(engine="sqlite", dsn="sqlite+aiosqlite:///:memory:")
+            db=DatabaseConfig(engine=DatabaseEngine.SQLITE, dsn="sqlite+aiosqlite:///:memory:")
         )
         engine = SPVWalletEngine(config)
         await engine.initialize()
@@ -244,7 +244,7 @@ class TestLifecycleHooks:
     async def test_after_save_called(self) -> None:
         """after_save is called after persist."""
         config = AppConfig(
-            db=DatabaseConfig(engine="sqlite", dsn="sqlite+aiosqlite:///:memory:")
+            db=DatabaseConfig(engine=DatabaseEngine.SQLITE, dsn="sqlite+aiosqlite:///:memory:")
         )
         engine = SPVWalletEngine(config)
         await engine.initialize()
@@ -271,7 +271,7 @@ class TestLifecycleHooks:
     async def test_lifecycle_hook_order(self) -> None:
         """Lifecycle hooks are called in correct order."""
         config = AppConfig(
-            db=DatabaseConfig(engine="sqlite", dsn="sqlite+aiosqlite:///:memory:")
+            db=DatabaseConfig(engine=DatabaseEngine.SQLITE, dsn="sqlite+aiosqlite:///:memory:")
         )
         engine = SPVWalletEngine(config)
         await engine.initialize()

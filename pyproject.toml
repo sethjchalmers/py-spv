@@ -62,6 +62,7 @@ desktop = [
     "PySide6>=6.7",
     "qrcode[pil]>=8.0",
     "Pillow>=11.0",
+    "mnemonic>=0.21",
 ]
 dev = [
     "pytest>=8.0",
@@ -78,10 +79,11 @@ dev = [
 all = ["py-spv[desktop,dev]"]
 
 [project.urls]
-Homepage = "https://github.com/your-org/py-spv"
-Documentation = "https://github.com/your-org/py-spv/blob/main/CONTEXT.md"
-Repository = "https://github.com/your-org/py-spv"
-Issues = "https://github.com/your-org/py-spv/issues"
+Homepage = "https://sethjchalmers.github.io/py-spv/"
+Documentation = "https://sethjchalmers.github.io/py-spv/"
+Repository = "https://github.com/sethjchalmers/py-spv"
+Issues = "https://github.com/sethjchalmers/py-spv/issues"
+Releases = "https://github.com/sethjchalmers/py-spv/releases"
 
 [project.scripts]
 py-spv = "spv_wallet.main:main"

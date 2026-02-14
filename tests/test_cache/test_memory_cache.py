@@ -7,22 +7,22 @@ import asyncio
 import pytest
 
 from spv_wallet.cache.memory import MemoryCache
-from spv_wallet.config.settings import CacheConfig
+from spv_wallet.config.settings import CacheConfig, CacheEngine
 
 
 class TestMemoryCache:
     """Test in-memory LRU cache with TTL."""
 
-    async def test_init(self) -> None:
+    async def test_init(self) -> None:  # noqa: ASYNC910
         """MemoryCache can be instantiated."""
-        config = CacheConfig(engine="memory")
+        config = CacheConfig(engine=CacheEngine.MEMORY)
         cache = MemoryCache(config, max_size=100)
         assert cache._max_size == 100
         assert len(cache._cache) == 0
 
     async def test_connect_close(self) -> None:
         """connect() and close() are no-ops."""
-        config = CacheConfig(engine="memory")
+        config = CacheConfig(engine=CacheEngine.MEMORY)
         cache = MemoryCache(config)
 
         await cache.connect()
@@ -31,7 +31,7 @@ class TestMemoryCache:
 
     async def test_set_get(self) -> None:
         """Set and get values."""
-        config = CacheConfig(engine="memory")
+        config = CacheConfig(engine=CacheEngine.MEMORY)
         cache = MemoryCache(config)
         await cache.connect()
 
@@ -40,7 +40,7 @@ class TestMemoryCache:
 
     async def test_get_nonexistent(self) -> None:
         """Get nonexistent key returns None."""
-        config = CacheConfig(engine="memory")
+        config = CacheConfig(engine=CacheEngine.MEMORY)
         cache = MemoryCache(config)
         await cache.connect()
 
@@ -48,7 +48,7 @@ class TestMemoryCache:
 
     async def test_delete(self) -> None:
         """Delete removes key."""
-        config = CacheConfig(engine="memory")
+        config = CacheConfig(engine=CacheEngine.MEMORY)
         cache = MemoryCache(config)
         await cache.connect()
 
@@ -58,7 +58,7 @@ class TestMemoryCache:
 
     async def test_exists(self) -> None:
         """exists() checks key presence."""
-        config = CacheConfig(engine="memory")
+        config = CacheConfig(engine=CacheEngine.MEMORY)
         cache = MemoryCache(config)
         await cache.connect()
 
@@ -70,7 +70,7 @@ class TestMemoryCache:
 
     async def test_flush(self) -> None:
         """flush() clears all keys."""
-        config = CacheConfig(engine="memory")
+        config = CacheConfig(engine=CacheEngine.MEMORY)
         cache = MemoryCache(config)
         await cache.connect()
 
@@ -83,20 +83,20 @@ class TestMemoryCache:
 
     async def test_ttl_expiry(self) -> None:
         """Keys with TTL expire after timeout."""
-        config = CacheConfig(engine="memory")
+        config = CacheConfig(engine=CacheEngine.MEMORY)
         cache = MemoryCache(config)
         await cache.connect()
 
-        await cache.set("key1", "value1", ttl=0.1)  # 100ms TTL
+        await cache.set("key1", "value1", ttl=1)  # 1 second TTL
         assert await cache.get("key1") == "value1"
 
-        await asyncio.sleep(0.15)  # Wait for expiry
+        await asyncio.sleep(1.1)  # Wait for expiry
         assert await cache.get("key1") is None
         assert not await cache.exists("key1")
 
     async def test_no_ttl_persists(self) -> None:
         """Keys without TTL persist."""
-        config = CacheConfig(engine="memory")
+        config = CacheConfig(engine=CacheEngine.MEMORY)
         cache = MemoryCache(config)
         await cache.connect()
 
@@ -106,7 +106,7 @@ class TestMemoryCache:
 
     async def test_lru_eviction(self) -> None:
         """Oldest key is evicted when max_size exceeded."""
-        config = CacheConfig(engine="memory")
+        config = CacheConfig(engine=CacheEngine.MEMORY)
         cache = MemoryCache(config, max_size=3)
         await cache.connect()
 
@@ -125,7 +125,7 @@ class TestMemoryCache:
 
     async def test_lru_access_updates_order(self) -> None:
         """Accessing a key moves it to the end (most recent)."""
-        config = CacheConfig(engine="memory")
+        config = CacheConfig(engine=CacheEngine.MEMORY)
         cache = MemoryCache(config, max_size=3)
         await cache.connect()
 
@@ -147,7 +147,7 @@ class TestMemoryCache:
 
     async def test_update_existing_key(self) -> None:
         """Setting existing key updates value."""
-        config = CacheConfig(engine="memory")
+        config = CacheConfig(engine=CacheEngine.MEMORY)
         cache = MemoryCache(config)
         await cache.connect()
 

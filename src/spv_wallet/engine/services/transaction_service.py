@@ -250,6 +250,79 @@ class TransactionService:
     # Transaction recording
     # ------------------------------------------------------------------
 
+    async def _mark_inputs_spent(
+        self, session: Any, bsv_tx: BsvTransaction, txid: str
+    ) -> None:
+        """Mark input UTXOs as spent by this transaction.
+
+        Args:
+            session: Database session.
+            bsv_tx: The parsed transaction.
+            txid: Transaction ID.
+        """
+        for inp in bsv_tx.inputs:
+            if inp.is_coinbase:
+                continue
+            utxo_id = f"{inp.prev_tx_id_hex}:{inp.prev_tx_out_index}"
+            utxo_result = await session.execute(
+                select(UTXO).where(UTXO.id == utxo_id, UTXO.deleted_at.is_(None))
+            )
+            utxo = utxo_result.scalar_one_or_none()
+            if utxo is not None:
+                utxo.spending_tx_id = txid
+
+    async def _create_output_utxos(
+        self, session: Any, bsv_tx: BsvTransaction, txid: str, xpub_id: str
+    ) -> None:
+        """Create UTXO records for owned outputs.
+
+        Args:
+            session: Database session.
+            bsv_tx: The parsed transaction.
+            txid: Transaction ID.
+            xpub_id: The owning xPubID.
+        """
+        for i, out in enumerate(bsv_tx.outputs):
+            script_type = detect_script_type(out.script_pubkey)
+            if script_type == ScriptType.NULL_DATA:
+                continue  # OP_RETURN outputs are not spendable
+
+            script_hex = out.script_pubkey.hex()
+            dest = await self._find_destination_by_script(script_hex)
+            if dest is not None:
+                utxo_id = f"{txid}:{i}"
+                existing_utxo = await session.execute(
+                    select(UTXO).where(UTXO.id == utxo_id)
+                )
+                if existing_utxo.scalar_one_or_none() is None:
+                    new_utxo = UTXO(
+                        id=utxo_id,
+                        xpub_id=xpub_id,
+                        transaction_id=txid,
+                        output_index=i,
+                        satoshis=out.value,
+                        script_pub_key=script_hex,
+                        type=script_type.value,
+                        destination_id=dest.id,
+                    )
+                    session.add(new_utxo)
+
+    async def _complete_draft(self, session: Any, draft_id: str, txid: str) -> None:
+        """Update draft status to complete and link final transaction.
+
+        Args:
+            session: Database session.
+            draft_id: Draft transaction ID.
+            txid: Final transaction ID.
+        """
+        draft_result = await session.execute(
+            select(DraftTransaction).where(DraftTransaction.id == draft_id)
+        )
+        draft = draft_result.scalar_one_or_none()
+        if draft:
+            draft.status = "complete"
+            draft.final_tx_id = txid
+
     async def record_transaction(
         self,
         xpub_id: str,
@@ -315,52 +388,14 @@ class TransactionService:
 
         async with self._engine.datastore.session() as session:
             # Mark input UTXOs as spent
-            for inp in bsv_tx.inputs:
-                if inp.is_coinbase:
-                    continue
-                utxo_id = f"{inp.prev_tx_id_hex}:{inp.prev_tx_out_index}"
-                utxo_result = await session.execute(
-                    select(UTXO).where(UTXO.id == utxo_id, UTXO.deleted_at.is_(None))
-                )
-                utxo = utxo_result.scalar_one_or_none()
-                if utxo is not None:
-                    utxo.spending_tx_id = txid
+            await self._mark_inputs_spent(session, bsv_tx, txid)
 
             # Create output UTXOs for owned destinations
-            for i, out in enumerate(bsv_tx.outputs):
-                script_type = detect_script_type(out.script_pubkey)
-                if script_type == ScriptType.NULL_DATA:
-                    continue  # OP_RETURN outputs are not spendable
-
-                script_hex = out.script_pubkey.hex()
-                dest = await self._find_destination_by_script(script_hex)
-                if dest is not None:
-                    utxo_id = f"{txid}:{i}"
-                    existing_utxo = await session.execute(
-                        select(UTXO).where(UTXO.id == utxo_id)
-                    )
-                    if existing_utxo.scalar_one_or_none() is None:
-                        new_utxo = UTXO(
-                            id=utxo_id,
-                            xpub_id=xpub_id,
-                            transaction_id=txid,
-                            output_index=i,
-                            satoshis=out.value,
-                            script_pub_key=script_hex,
-                            type=script_type.value,
-                            destination_id=dest.id,
-                        )
-                        session.add(new_utxo)
+            await self._create_output_utxos(session, bsv_tx, txid, xpub_id)
 
             # Update draft status
             if draft_id:
-                draft_result = await session.execute(
-                    select(DraftTransaction).where(DraftTransaction.id == draft_id)
-                )
-                draft = draft_result.scalar_one_or_none()
-                if draft:
-                    draft.status = "complete"
-                    draft.final_tx_id = txid
+                await self._complete_draft(session, draft_id, txid)
 
             session.add(tx_record)
             await session.commit()

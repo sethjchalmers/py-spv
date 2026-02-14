@@ -57,7 +57,7 @@ def validate_address(address: str) -> bool:
     try:
         payload = base58check_decode(address)
         return len(payload) == 21 and payload[0] in (0x00, 0x6F)
-    except (ValueError, Exception):  # noqa: BLE001
+    except ValueError:
         return False
 
 

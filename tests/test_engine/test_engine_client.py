@@ -4,14 +4,19 @@ from __future__ import annotations
 
 import pytest
 
-from spv_wallet.config.settings import AppConfig, CacheConfig, DatabaseConfig
+from spv_wallet.config.settings import (
+    AppConfig,
+    CacheConfig,
+    DatabaseConfig,
+    DatabaseEngine,
+)
 from spv_wallet.engine.client import SPVWalletEngine
 
 
 class TestSPVWalletEngine:
     """Test engine initialization, lifecycle, and health checks."""
 
-    async def test_init(self) -> None:
+    async def test_init(self) -> None:  # noqa: ASYNC910
         """Engine can be instantiated with config."""
         config = AppConfig()
         engine = SPVWalletEngine(config)
@@ -21,7 +26,7 @@ class TestSPVWalletEngine:
     async def test_initialize_and_close(self) -> None:
         """Engine can be initialized and closed."""
         config = AppConfig(
-            db=DatabaseConfig(engine="sqlite", dsn="sqlite+aiosqlite:///:memory:")
+            db=DatabaseConfig(engine=DatabaseEngine.SQLITE, dsn="sqlite+aiosqlite:///:memory:")
         )
         engine = SPVWalletEngine(config)
 
@@ -36,7 +41,7 @@ class TestSPVWalletEngine:
     async def test_double_initialize_raises(self) -> None:
         """Cannot initialize twice."""
         config = AppConfig(
-            db=DatabaseConfig(engine="sqlite", dsn="sqlite+aiosqlite:///:memory:")
+            db=DatabaseConfig(engine=DatabaseEngine.SQLITE, dsn="sqlite+aiosqlite:///:memory:")
         )
         engine = SPVWalletEngine(config)
 
@@ -48,7 +53,7 @@ class TestSPVWalletEngine:
     async def test_close_idempotent(self) -> None:
         """close() can be called multiple times."""
         config = AppConfig(
-            db=DatabaseConfig(engine="sqlite", dsn="sqlite+aiosqlite:///:memory:")
+            db=DatabaseConfig(engine=DatabaseEngine.SQLITE, dsn="sqlite+aiosqlite:///:memory:")
         )
         engine = SPVWalletEngine(config)
 
@@ -56,7 +61,7 @@ class TestSPVWalletEngine:
         await engine.close()
         await engine.close()  # Should not raise
 
-    async def test_datastore_property_before_init(self) -> None:
+    async def test_datastore_property_before_init(self) -> None:  # noqa: ASYNC910
         """Accessing datastore before init raises RuntimeError."""
         config = AppConfig()
         engine = SPVWalletEngine(config)
@@ -64,7 +69,7 @@ class TestSPVWalletEngine:
         with pytest.raises(RuntimeError, match="not initialized"):
             _ = engine.datastore
 
-    async def test_cache_property_before_init(self) -> None:
+    async def test_cache_property_before_init(self) -> None:  # noqa: ASYNC910
         """Accessing cache before init raises RuntimeError."""
         config = AppConfig()
         engine = SPVWalletEngine(config)
@@ -80,7 +85,7 @@ class TestSPVWalletEngine:
         status = await engine.health_check()
         assert status["engine"] == "not_initialized"
 
-    async def test_transaction_service_before_init(self) -> None:
+    async def test_transaction_service_before_init(self) -> None:  # noqa: ASYNC910
         """Accessing transaction_service before init raises RuntimeError."""
         config = AppConfig()
         engine = SPVWalletEngine(config)
@@ -91,14 +96,14 @@ class TestSPVWalletEngine:
     async def test_transaction_service_after_init(self) -> None:
         """transaction_service is available after init."""
         config = AppConfig(
-            db=DatabaseConfig(engine="sqlite", dsn="sqlite+aiosqlite:///:memory:")
+            db=DatabaseConfig(engine=DatabaseEngine.SQLITE, dsn="sqlite+aiosqlite:///:memory:")
         )
         engine = SPVWalletEngine(config)
         await engine.initialize()
         assert engine.transaction_service is not None
         await engine.close()
 
-    async def test_chain_service_before_init(self) -> None:
+    async def test_chain_service_before_init(self) -> None:  # noqa: ASYNC910
         """chain_service is None before init."""
         config = AppConfig()
         engine = SPVWalletEngine(config)
@@ -107,7 +112,7 @@ class TestSPVWalletEngine:
     async def test_chain_service_after_init(self) -> None:
         """chain_service may or may not be available after init."""
         config = AppConfig(
-            db=DatabaseConfig(engine="sqlite", dsn="sqlite+aiosqlite:///:memory:")
+            db=DatabaseConfig(engine=DatabaseEngine.SQLITE, dsn="sqlite+aiosqlite:///:memory:")
         )
         engine = SPVWalletEngine(config)
         await engine.initialize()
@@ -118,7 +123,7 @@ class TestSPVWalletEngine:
     async def test_health_check_includes_chain(self) -> None:
         """Health check includes chain status."""
         config = AppConfig(
-            db=DatabaseConfig(engine="sqlite", dsn="sqlite+aiosqlite:///:memory:")
+            db=DatabaseConfig(engine=DatabaseEngine.SQLITE, dsn="sqlite+aiosqlite:///:memory:")
         )
         engine = SPVWalletEngine(config)
         await engine.initialize()
@@ -128,7 +133,7 @@ class TestSPVWalletEngine:
     async def test_health_check_initialized(self) -> None:
         """Health check after init shows all ok."""
         config = AppConfig(
-            db=DatabaseConfig(engine="sqlite", dsn="sqlite+aiosqlite:///:memory:")
+            db=DatabaseConfig(engine=DatabaseEngine.SQLITE, dsn="sqlite+aiosqlite:///:memory:")
         )
         engine = SPVWalletEngine(config)
 
@@ -143,7 +148,7 @@ class TestSPVWalletEngine:
     async def test_health_check_after_close(self) -> None:
         """Health check after close shows not_initialized."""
         config = AppConfig(
-            db=DatabaseConfig(engine="sqlite", dsn="sqlite+aiosqlite:///:memory:")
+            db=DatabaseConfig(engine=DatabaseEngine.SQLITE, dsn="sqlite+aiosqlite:///:memory:")
         )
         engine = SPVWalletEngine(config)
 

@@ -15,6 +15,9 @@ if TYPE_CHECKING:
     from spv_wallet.engine.services.utxo_service import UTXOService
     from spv_wallet.engine.services.xpub_service import XPubService
 
+# Error messages
+_ERR_NOT_INITIALIZED = "Engine not initialized. Call initialize() first."
+
 
 class SPVWalletEngine:
     """Central engine that owns all services and infrastructure.
@@ -36,7 +39,6 @@ class SPVWalletEngine:
         self._datastore: Datastore | None = None
         self._cache: CacheClient | None = None
         self._chain: ChainService | None = None
-        # self._task_manager = None  # Phase 7
 
         # Services
         self._xpub_service: XPubService | None = None
@@ -149,8 +151,7 @@ class SPVWalletEngine:
             RuntimeError: If engine not initialized.
         """
         if self._datastore is None:
-            msg = "Engine not initialized. Call initialize() first."
-            raise RuntimeError(msg)
+            raise RuntimeError(_ERR_NOT_INITIALIZED)
         return self._datastore
 
     @property
@@ -164,8 +165,7 @@ class SPVWalletEngine:
             RuntimeError: If engine not initialized.
         """
         if self._cache is None:
-            msg = "Engine not initialized. Call initialize() first."
-            raise RuntimeError(msg)
+            raise RuntimeError(_ERR_NOT_INITIALIZED)
         return self._cache
 
     @property
@@ -177,40 +177,35 @@ class SPVWalletEngine:
     def xpub_service(self) -> XPubService:
         """Get the xPub service."""
         if self._xpub_service is None:
-            msg = "Engine not initialized. Call initialize() first."
-            raise RuntimeError(msg)
+            raise RuntimeError(_ERR_NOT_INITIALIZED)
         return self._xpub_service
 
     @property
     def destination_service(self) -> DestinationService:
         """Get the destination service."""
         if self._destination_service is None:
-            msg = "Engine not initialized. Call initialize() first."
-            raise RuntimeError(msg)
+            raise RuntimeError(_ERR_NOT_INITIALIZED)
         return self._destination_service
 
     @property
     def utxo_service(self) -> UTXOService:
         """Get the UTXO service."""
         if self._utxo_service is None:
-            msg = "Engine not initialized. Call initialize() first."
-            raise RuntimeError(msg)
+            raise RuntimeError(_ERR_NOT_INITIALIZED)
         return self._utxo_service
 
     @property
     def access_key_service(self) -> AccessKeyService:
         """Get the access key service."""
         if self._access_key_service is None:
-            msg = "Engine not initialized. Call initialize() first."
-            raise RuntimeError(msg)
+            raise RuntimeError(_ERR_NOT_INITIALIZED)
         return self._access_key_service
 
     @property
     def transaction_service(self) -> TransactionService:
         """Get the transaction service."""
         if self._transaction_service is None:
-            msg = "Engine not initialized. Call initialize() first."
-            raise RuntimeError(msg)
+            raise RuntimeError(_ERR_NOT_INITIALIZED)
         return self._transaction_service
 
     @property
@@ -221,7 +216,7 @@ class SPVWalletEngine:
         """
         return self._chain
 
-    async def health_check(self) -> dict[str, str]:
+    async def health_check(self) -> dict[str, str]:  # noqa: ASYNC910
         """Check health status of all engine components.
 
         Returns:

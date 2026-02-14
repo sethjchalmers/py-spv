@@ -29,7 +29,7 @@ class TestCreateEngine:
             "spv_wallet.datastore.engines.create_async_engine",
             return_value=MagicMock(),
         ) as mock_create:
-            engine = create_engine(config)
+            _ = create_engine(config)
             mock_create.assert_called_once()
             call_kwargs = mock_create.call_args[1]
             assert call_kwargs["pool_size"] == 5

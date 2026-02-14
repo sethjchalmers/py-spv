@@ -46,7 +46,7 @@ class BHSService:
         self._config = config
         self._client: httpx.AsyncClient | None = None
 
-    async def connect(self) -> None:
+    async def connect(self) -> None:  # noqa: ASYNC910
         """Create the underlying HTTP client."""
         headers: dict[str, str] = {
             "Content-Type": "application/json",

@@ -10,7 +10,7 @@ from spv_wallet.bsv.keys import ExtendedKey, xpub_id
 from spv_wallet.bsv.script import p2pkh_lock_script
 from spv_wallet.bsv.transaction import Transaction as BsvTransaction
 from spv_wallet.chain.arc.models import FeeUnit, TXInfo, TXStatus
-from spv_wallet.config.settings import AppConfig, DatabaseConfig
+from spv_wallet.config.settings import AppConfig, DatabaseConfig, DatabaseEngine
 from spv_wallet.engine.client import SPVWalletEngine
 from spv_wallet.engine.services.transaction_service import (
     ErrDraftCanceled,
@@ -44,7 +44,7 @@ _P2PKH_SCRIPT = "76a914" + "ab" * 20 + "88ac"
 @pytest.fixture
 async def engine():
     config = AppConfig(
-        db=DatabaseConfig(engine="sqlite", dsn="sqlite+aiosqlite:///:memory:")
+        db=DatabaseConfig(engine=DatabaseEngine.SQLITE, dsn="sqlite+aiosqlite:///:memory:")
     )
     eng = SPVWalletEngine(config)
     await eng.initialize()

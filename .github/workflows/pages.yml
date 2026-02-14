@@ -1,0 +1,327 @@
+# ─────────────────────────────────────────────────────────────
+# Pages — Deploy project site + coverage report to GitHub Pages
+# ─────────────────────────────────────────────────────────────
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-site:
+    name: Build Site
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install & test with coverage
+        run: |
+          pip install --upgrade pip
+          pip install -e ".[dev]"
+          pytest --cov --cov-report=html
+
+      - name: Build site
+        run: |
+          mkdir -p _site/coverage
+
+          # Copy coverage report
+          cp -r htmlcov/* _site/coverage/
+
+          # Generate landing page
+          cat > _site/index.html << 'ENDHTML'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>py-spv — BSV SPV Wallet</title>
+            <style>
+              :root {
+                --bg: #0d1117;
+                --surface: #161b22;
+                --border: #30363d;
+                --text: #e6edf3;
+                --text-muted: #8b949e;
+                --gold: #eab308;
+                --gold-dim: #a17e06;
+                --blue: #58a6ff;
+                --green: #3fb950;
+                --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+                --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+              }
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body {
+                font-family: var(--font);
+                background: var(--bg);
+                color: var(--text);
+                line-height: 1.6;
+                min-height: 100vh;
+              }
+              .hero {
+                text-align: center;
+                padding: 80px 20px 60px;
+                background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #1a1e24 100%);
+                border-bottom: 1px solid var(--border);
+              }
+              .hero h1 {
+                font-size: 3.5rem;
+                font-weight: 800;
+                margin-bottom: 16px;
+                background: linear-gradient(135deg, var(--gold) 0%, #f5c842 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+              }
+              .hero .subtitle {
+                font-size: 1.25rem;
+                color: var(--text-muted);
+                max-width: 600px;
+                margin: 0 auto 32px;
+              }
+              .badges {
+                display: flex;
+                gap: 8px;
+                justify-content: center;
+                flex-wrap: wrap;
+                margin-bottom: 40px;
+              }
+              .badges img { height: 28px; }
+              .cta-row {
+                display: flex;
+                gap: 16px;
+                justify-content: center;
+                flex-wrap: wrap;
+              }
+              .btn {
+                display: inline-block;
+                padding: 12px 28px;
+                border-radius: 8px;
+                text-decoration: none;
+                font-weight: 600;
+                font-size: 1rem;
+                transition: all 0.2s;
+              }
+              .btn-primary {
+                background: var(--gold);
+                color: #000;
+              }
+              .btn-primary:hover { background: #f5c842; transform: translateY(-1px); }
+              .btn-secondary {
+                background: var(--surface);
+                color: var(--text);
+                border: 1px solid var(--border);
+              }
+              .btn-secondary:hover { border-color: var(--gold); }
+              .container {
+                max-width: 1100px;
+                margin: 0 auto;
+                padding: 60px 20px;
+              }
+              .grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 24px;
+                margin-top: 40px;
+              }
+              .card {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                padding: 28px;
+                transition: border-color 0.2s;
+              }
+              .card:hover { border-color: var(--gold-dim); }
+              .card .icon { font-size: 2rem; margin-bottom: 12px; }
+              .card h3 { font-size: 1.2rem; margin-bottom: 8px; color: var(--gold); }
+              .card p { color: var(--text-muted); font-size: 0.95rem; }
+              h2 {
+                font-size: 2rem;
+                text-align: center;
+                margin-bottom: 8px;
+              }
+              .section-sub {
+                text-align: center;
+                color: var(--text-muted);
+                font-size: 1.1rem;
+              }
+              .stats {
+                display: flex;
+                justify-content: center;
+                gap: 48px;
+                margin: 48px 0;
+                flex-wrap: wrap;
+              }
+              .stat { text-align: center; }
+              .stat .number {
+                font-size: 2.5rem;
+                font-weight: 800;
+                color: var(--gold);
+              }
+              .stat .label {
+                font-size: 0.9rem;
+                color: var(--text-muted);
+                margin-top: 4px;
+              }
+              .install-box {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                padding: 24px 32px;
+                max-width: 600px;
+                margin: 40px auto 0;
+                text-align: left;
+              }
+              .install-box code {
+                font-family: var(--mono);
+                color: var(--green);
+                font-size: 0.95rem;
+              }
+              .install-box .comment { color: var(--text-muted); }
+              footer {
+                text-align: center;
+                padding: 40px 20px;
+                border-top: 1px solid var(--border);
+                color: var(--text-muted);
+                font-size: 0.9rem;
+              }
+              footer a { color: var(--gold); text-decoration: none; }
+              footer a:hover { text-decoration: underline; }
+              @media (max-width: 640px) {
+                .hero h1 { font-size: 2.5rem; }
+                .stats { gap: 24px; }
+                .stat .number { font-size: 2rem; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="hero">
+              <h1>₿ py-spv</h1>
+              <p class="subtitle">
+                A pure-Python SPV Wallet for the BSV Blockchain — non-custodial server
+                &amp; native desktop client. Validate transactions with Merkle proofs,
+                no full node required.
+              </p>
+              <div class="badges">
+                <img src="https://github.com/sethjchalmers/py-spv/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI">
+                <img src="https://img.shields.io/badge/coverage-94%25-brightgreen" alt="Coverage">
+                <img src="https://img.shields.io/badge/python-3.12+-3776ab?logo=python&logoColor=white" alt="Python">
+                <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT">
+              </div>
+              <div class="cta-row">
+                <a class="btn btn-primary" href="https://github.com/sethjchalmers/py-spv/releases/latest">⬇ Download Desktop</a>
+                <a class="btn btn-secondary" href="https://github.com/sethjchalmers/py-spv">GitHub Repository</a>
+                <a class="btn btn-secondary" href="coverage/">Coverage Report</a>
+              </div>
+            </div>
+
+            <div class="container">
+              <div class="stats">
+                <div class="stat"><div class="number">491</div><div class="label">Tests</div></div>
+                <div class="stat"><div class="number">94%</div><div class="label">Coverage</div></div>
+                <div class="stat"><div class="number">3</div><div class="label">Platforms</div></div>
+                <div class="stat"><div class="number">&lt;13s</div><div class="label">Test Suite</div></div>
+              </div>
+
+              <h2>Features</h2>
+              <p class="section-sub">Everything you need for BSV SPV wallet operations</p>
+              <div class="grid">
+                <div class="card">
+                  <div class="icon">🔐</div>
+                  <h3>Non-Custodial</h3>
+                  <p>Private keys never leave your device. BIP39 seed phrase generation with guided backup flow.</p>
+                </div>
+                <div class="card">
+                  <div class="icon">⚡</div>
+                  <h3>SPV Validation</h3>
+                  <p>Merkle proof verification via Block Headers Service. No full node required — 100x cheaper to run.</p>
+                </div>
+                <div class="card">
+                  <div class="icon">🖥️</div>
+                  <h3>Desktop Wallet</h3>
+                  <p>Dark-themed Qt6 app with send/receive, transaction history, QR codes, and seed phrase wizard.</p>
+                </div>
+                <div class="card">
+                  <div class="icon">📬</div>
+                  <h3>Paymail Support</h3>
+                  <p>Human-readable addresses (user@domain.tld) with P2P payment negotiation and PIKE contacts.</p>
+                </div>
+                <div class="card">
+                  <div class="icon">🥩</div>
+                  <h3>BEEF Transactions</h3>
+                  <p>Background Evaluation Extended Format for compact transaction ancestry proofs.</p>
+                </div>
+                <div class="card">
+                  <div class="icon">📡</div>
+                  <h3>ARC Integration</h3>
+                  <p>Transaction broadcasting, fee policy management, and async status callbacks.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="container">
+              <h2>Quick Start</h2>
+              <div class="install-box">
+                <code>
+                  <span class="comment"># Clone & install</span><br>
+                  git clone https://github.com/sethjchalmers/py-spv.git<br>
+                  cd py-spv<br>
+                  pip install -e ".[all]"<br>
+                  <br>
+                  <span class="comment"># Run the desktop wallet</span><br>
+                  py-spv-desktop<br>
+                  <br>
+                  <span class="comment"># Run the server</span><br>
+                  py-spv<br>
+                  <br>
+                  <span class="comment"># Run tests</span><br>
+                  pytest
+                </code>
+              </div>
+            </div>
+
+            <footer>
+              <p>
+                Built with Python · Powered by
+                <a href="https://github.com/bsv-blockchain/spv-wallet">SPV Wallet</a> ·
+                <a href="https://github.com/sethjchalmers/py-spv">Source Code</a> ·
+                <a href="https://github.com/sethjchalmers/py-spv/releases/latest">Releases</a>
+              </p>
+            </footer>
+          </body>
+          </html>
+          ENDHTML
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    name: Deploy to Pages
+    needs: build-site
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4

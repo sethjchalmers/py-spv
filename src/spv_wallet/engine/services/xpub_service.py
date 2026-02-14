@@ -58,7 +58,7 @@ class XPubService:
         # Validate via BIP32 deserialization
         try:
             key = ExtendedKey.from_string(raw_xpub)
-        except (ValueError, Exception) as exc:  # noqa: BLE001
+        except ValueError as exc:
             raise ErrInvalidXPub from exc
 
         if key.is_private:
@@ -86,7 +86,7 @@ class XPubService:
             await session.refresh(xpub)
 
         # Cache
-        await self._cache_xpub(xpub, raw_xpub)
+        await self._cache_xpub(xpub)
 
         return xpub
 
@@ -231,7 +231,7 @@ class XPubService:
     # Cache helpers
     # ------------------------------------------------------------------
 
-    async def _cache_xpub(self, xpub: Xpub, raw_xpub: str | None = None) -> None:
+    async def _cache_xpub(self, xpub: Xpub) -> None:
         """Store xPub in cache."""
         data = {
             "id": xpub.id,

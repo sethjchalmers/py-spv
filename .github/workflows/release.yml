@@ -1,0 +1,168 @@
+# ─────────────────────────────────────────────────────────────
+# Release — Build desktop binaries & publish GitHub Release
+# Triggered on version tag push (v*)
+# ─────────────────────────────────────────────────────────────
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  # ── Build desktop binaries ───────────────────────────────
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            artifact: py-spv-desktop-macos
+            binary_name: py-spv-desktop
+            archive_cmd: cd dist && zip -r ../py-spv-desktop-macos.zip py-spv-desktop.app 2>/dev/null || zip -r ../py-spv-desktop-macos.zip py-spv-desktop
+          - os: ubuntu-latest
+            artifact: py-spv-desktop-linux
+            binary_name: py-spv-desktop
+            archive_cmd: cd dist && tar czf ../py-spv-desktop-linux.tar.gz py-spv-desktop
+          - os: windows-latest
+            artifact: py-spv-desktop-windows
+            binary_name: py-spv-desktop.exe
+            archive_cmd: cd dist && powershell Compress-Archive -Path py-spv-desktop.exe -DestinationPath ../py-spv-desktop-windows.zip
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-build-${{ hashFiles('pyproject.toml') }}
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -e ".[desktop]"
+          pip install pyinstaller
+
+      # Linux needs virtual framebuffer for Qt
+      - name: Install Linux display deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libxkbcommon-x11-0 \
+            libxcb-xinerama0 \
+            libxcb-cursor0 \
+            libegl1 \
+            libgl1-mesa-glx \
+            libglib2.0-0 \
+            libdbus-1-3 \
+            libfontconfig1
+
+      - name: Build binary with PyInstaller
+        run: |
+          pyinstaller \
+            --name py-spv-desktop \
+            --onefile \
+            --windowed \
+            --noconfirm \
+            --clean \
+            --add-data "src/spv_wallet:spv_wallet" \
+            --hidden-import spv_wallet.desktop.app \
+            --hidden-import spv_wallet.desktop.theme \
+            --hidden-import spv_wallet.desktop.wallet_wizard \
+            --hidden-import spv_wallet.desktop.wallet_api \
+            --hidden-import spv_wallet.desktop.main_window \
+            --hidden-import spv_wallet.bsv.keys \
+            --hidden-import mnemonic \
+            --hidden-import PySide6 \
+            --hidden-import qrcode \
+            --hidden-import PIL \
+            src/spv_wallet/desktop/app.py
+        shell: bash
+
+      - name: Create archive
+        run: ${{ matrix.archive_cmd }}
+        shell: bash
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            py-spv-desktop-*.zip
+            py-spv-desktop-*.tar.gz
+          if-no-files-found: error
+
+  # ── Create GitHub Release ────────────────────────────────
+  release:
+    name: Publish Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+          merge-multiple: true
+
+      - name: List artifacts
+        run: find artifacts/ -type f | head -20
+
+      - name: Generate release notes
+        id: notes
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          cat > release-notes.md << 'EOF'
+          ## 🚀 py-spv $TAG
+
+          ### Desktop Wallet Downloads
+
+          | Platform | File |
+          |---|---|
+          | 🍎 macOS (Intel + Apple Silicon) | `py-spv-desktop-macos.zip` |
+          | 🪟 Windows (x64) | `py-spv-desktop-windows.zip` |
+          | 🐧 Linux (x64) | `py-spv-desktop-linux.tar.gz` |
+
+          ### Installation
+
+          1. Download the archive for your platform
+          2. Extract the archive
+          3. Run `py-spv-desktop` (macOS/Linux) or `py-spv-desktop.exe` (Windows)
+
+          ### From Source
+
+          ```bash
+          pip install -e ".[desktop]"
+          py-spv-desktop
+          ```
+
+          ---
+          *Built automatically by GitHub Actions*
+          EOF
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.notes.outputs.tag }}
+          name: "py-spv ${{ steps.notes.outputs.tag }}"
+          body_path: release-notes.md
+          draft: false
+          prerelease: ${{ contains(steps.notes.outputs.tag, '-') }}
+          files: |
+            artifacts/**/*.zip
+            artifacts/**/*.tar.gz
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
