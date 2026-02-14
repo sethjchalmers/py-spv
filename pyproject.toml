@@ -175,6 +175,9 @@ markers = [
 filterwarnings = [
     "error",
     "ignore::DeprecationWarning:sqlalchemy.*",
+    "ignore::DeprecationWarning:aiohttp.*",
+    "ignore::DeprecationWarning:aiosqlite.*",
+    "ignore::DeprecationWarning:pkg_resources.*",
 ]
 
 # ---------------------------------------------------------------------------
