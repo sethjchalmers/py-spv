@@ -16,16 +16,15 @@ import sys
 def main() -> None:
     """Launch the py-spv desktop application."""
     try:
-        from PySide6.QtWidgets import QApplication, QWizard  # noqa: PLC0415
+        from PySide6.QtWidgets import QApplication, QWizard
 
-        from spv_wallet.desktop.main_window import MainWindow  # noqa: PLC0415
-        from spv_wallet.desktop.theme import DARK_STYLESHEET  # noqa: PLC0415
-        from spv_wallet.desktop.wallet_api import WalletAPI  # noqa: PLC0415
-        from spv_wallet.desktop.wallet_wizard import WalletWizard  # noqa: PLC0415
+        from spv_wallet.desktop.main_window import MainWindow
+        from spv_wallet.desktop.theme import DARK_STYLESHEET
+        from spv_wallet.desktop.wallet_api import WalletAPI
+        from spv_wallet.desktop.wallet_wizard import WalletWizard
     except ImportError:
         print(  # noqa: T201
-            "Desktop dependencies not installed. "
-            "Install with: pip install py-spv[desktop]"
+            "Desktop dependencies not installed. Install with: pip install py-spv[desktop]"
         )
         sys.exit(1)
 

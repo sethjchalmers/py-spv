@@ -39,7 +39,7 @@ class OpCode(int, enum.Enum):
 # ---------------------------------------------------------------------------
 
 
-class ScriptType(str, enum.Enum):
+class ScriptType(enum.StrEnum):
     """Known script types."""
 
     P2PKH = "pubkeyhash"

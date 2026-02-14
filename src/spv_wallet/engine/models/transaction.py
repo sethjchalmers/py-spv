@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
-
-from sqlalchemy import JSON, BigInteger, Boolean, Integer, String, Text
+from sqlalchemy import BigInteger, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from spv_wallet.engine.models.base import Base, MetadataMixin, ModelOps, TimestampMixin
@@ -47,11 +45,15 @@ class Transaction(Base, TimestampMixin, MetadataMixin, ModelOps):
         BigInteger, nullable=False, default=0, comment="Total satoshis transferred"
     )
     status: Mapped[str] = mapped_column(
-        String(32), nullable=False, default="created",
+        String(32),
+        nullable=False,
+        default="created",
         comment="created | broadcast | seen_on_network | mined | rejected",
     )
     direction: Mapped[str] = mapped_column(
-        String(16), nullable=False, default="outgoing",
+        String(16),
+        nullable=False,
+        default="outgoing",
         comment="incoming | outgoing",
     )
     number_of_inputs: Mapped[int] = mapped_column(

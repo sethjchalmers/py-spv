@@ -26,15 +26,11 @@ class PaymailAddress(Base, TimestampMixin, MetadataMixin, ModelOps):
     alias: Mapped[str] = mapped_column(
         String(128), nullable=False, comment="Paymail alias (local part)"
     )
-    domain: Mapped[str] = mapped_column(
-        String(255), nullable=False, comment="Paymail domain"
-    )
+    domain: Mapped[str] = mapped_column(String(255), nullable=False, comment="Paymail domain")
     public_name: Mapped[str] = mapped_column(
         String(255), nullable=False, default="", comment="Display name"
     )
-    avatar: Mapped[str] = mapped_column(
-        Text, nullable=False, default="", comment="Avatar URL"
-    )
+    avatar: Mapped[str] = mapped_column(Text, nullable=False, default="", comment="Avatar URL")
 
     @property
     def address(self) -> str:

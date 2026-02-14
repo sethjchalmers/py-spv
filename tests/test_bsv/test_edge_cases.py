@@ -22,13 +22,12 @@ from spv_wallet.bsv.keys import (
     verify_signature,
 )
 from spv_wallet.bsv.script import (
+    OpCode,
     ScriptType,
     detect_script_type,
     push_data,
-    OpCode,
 )
 from spv_wallet.bsv.transaction import TxInput
-
 
 # ---------------------------------------------------------------------------
 # keys.py edge cases

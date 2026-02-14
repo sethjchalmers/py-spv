@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy import BigInteger, Boolean, Integer, String, Text
+from sqlalchemy import BigInteger, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from spv_wallet.engine.models.base import Base, MetadataMixin, ModelOps, TimestampMixin
@@ -29,9 +29,7 @@ class UTXO(Base, TimestampMixin, MetadataMixin, ModelOps):
     output_index: Mapped[int] = mapped_column(
         Integer, nullable=False, comment="Output index (vout)"
     )
-    satoshis: Mapped[int] = mapped_column(
-        BigInteger, nullable=False, comment="Value in satoshis"
-    )
+    satoshis: Mapped[int] = mapped_column(BigInteger, nullable=False, comment="Value in satoshis")
     script_pub_key: Mapped[str] = mapped_column(
         Text, nullable=False, comment="Hex-encoded locking script"
     )
@@ -39,11 +37,15 @@ class UTXO(Base, TimestampMixin, MetadataMixin, ModelOps):
         String(32), nullable=False, default="pubkeyhash", comment="Script type"
     )
     spending_tx_id: Mapped[str] = mapped_column(
-        String(64), nullable=False, default="",
+        String(64),
+        nullable=False,
+        default="",
         comment="Transaction ID that spent this UTXO (empty if unspent)",
     )
     draft_id: Mapped[str] = mapped_column(
-        String(64), nullable=False, default="",
+        String(64),
+        nullable=False,
+        default="",
         comment="Draft transaction ID that reserved this UTXO",
     )
     destination_id: Mapped[str] = mapped_column(

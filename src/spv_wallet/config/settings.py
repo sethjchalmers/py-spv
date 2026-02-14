@@ -16,27 +16,26 @@ import yaml
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 # ---------------------------------------------------------------------------
 # Enums for validated choices
 # ---------------------------------------------------------------------------
 
 
-class DatabaseEngine(str, enum.Enum):
+class DatabaseEngine(enum.StrEnum):
     """Supported database engines."""
 
     SQLITE = "sqlite"
     POSTGRESQL = "postgresql"
 
 
-class CacheEngine(str, enum.Enum):
+class CacheEngine(enum.StrEnum):
     """Supported cache backends."""
 
     MEMORY = "memory"
     REDIS = "redis"
 
 
-class ArcWaitFor(str, enum.Enum):
+class ArcWaitFor(enum.StrEnum):
     """ARC broadcast wait strategy."""
 
     SEEN_ON_NETWORK = "SEEN_ON_NETWORK"

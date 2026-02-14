@@ -10,7 +10,6 @@ from spv_wallet.chain.arc.service import ARCService
 from spv_wallet.config.settings import ARCConfig
 from spv_wallet.errors.chain_errors import ARCError
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -71,15 +70,20 @@ class TestARCBroadcast:
         def handler(request: httpx.Request):
             assert request.url.path == "/v1/tx"
             assert "X-WaitFor" in request.headers
-            return httpx.Response(200, json={
-                "txid": "abc123",
-                "txStatus": "SEEN_ON_NETWORK",
-            })
+            return httpx.Response(
+                200,
+                json={
+                    "txid": "abc123",
+                    "txStatus": "SEEN_ON_NETWORK",
+                },
+            )
 
         arc = ARCService(_arc_config())
         await arc.connect()
         # Replace internal client with mock
-        arc._client = httpx.AsyncClient(transport=_mock_transport(handler), base_url="https://arc.test.com")
+        arc._client = httpx.AsyncClient(
+            transport=_mock_transport(handler), base_url="https://arc.test.com"
+        )
 
         info = await arc.broadcast("deadbeef")
         assert info.txid == "abc123"
@@ -88,14 +92,19 @@ class TestARCBroadcast:
 
     async def test_broadcast_201(self):
         def handler(request: httpx.Request):
-            return httpx.Response(201, json={
-                "txid": "new_tx",
-                "txStatus": "QUEUED",
-            })
+            return httpx.Response(
+                201,
+                json={
+                    "txid": "new_tx",
+                    "txStatus": "QUEUED",
+                },
+            )
 
         arc = ARCService(_arc_config())
         await arc.connect()
-        arc._client = httpx.AsyncClient(transport=_mock_transport(handler), base_url="https://arc.test.com")
+        arc._client = httpx.AsyncClient(
+            transport=_mock_transport(handler), base_url="https://arc.test.com"
+        )
 
         info = await arc.broadcast("beef")
         assert info.txid == "new_tx"
@@ -110,7 +119,9 @@ class TestARCBroadcast:
         config = _arc_config(callback_url="https://callback.test", callback_token="cb-token")
         arc = ARCService(config)
         await arc.connect()
-        arc._client = httpx.AsyncClient(transport=_mock_transport(handler), base_url="https://arc.test.com")
+        arc._client = httpx.AsyncClient(
+            transport=_mock_transport(handler), base_url="https://arc.test.com"
+        )
 
         await arc.broadcast("hex")
         await arc.close()
@@ -121,7 +132,9 @@ class TestARCBroadcast:
 
         arc = ARCService(_arc_config())
         await arc.connect()
-        arc._client = httpx.AsyncClient(transport=_mock_transport(handler), base_url="https://arc.test.com")
+        arc._client = httpx.AsyncClient(
+            transport=_mock_transport(handler), base_url="https://arc.test.com"
+        )
 
         with pytest.raises(ARCError, match="Fee too low"):
             await arc.broadcast("hex")
@@ -133,7 +146,9 @@ class TestARCBroadcast:
 
         arc = ARCService(_arc_config())
         await arc.connect()
-        arc._client = httpx.AsyncClient(transport=_mock_transport(handler), base_url="https://arc.test.com")
+        arc._client = httpx.AsyncClient(
+            transport=_mock_transport(handler), base_url="https://arc.test.com"
+        )
 
         with pytest.raises(ARCError, match="conflict"):
             await arc.broadcast("hex")
@@ -145,7 +160,9 @@ class TestARCBroadcast:
 
         arc = ARCService(_arc_config())
         await arc.connect()
-        arc._client = httpx.AsyncClient(transport=_mock_transport(handler), base_url="https://arc.test.com")
+        arc._client = httpx.AsyncClient(
+            transport=_mock_transport(handler), base_url="https://arc.test.com"
+        )
 
         with pytest.raises(ARCError, match="malformed"):
             await arc.broadcast("hex")
@@ -157,7 +174,9 @@ class TestARCBroadcast:
 
         arc = ARCService(_arc_config())
         await arc.connect()
-        arc._client = httpx.AsyncClient(transport=_mock_transport(handler), base_url="https://arc.test.com")
+        arc._client = httpx.AsyncClient(
+            transport=_mock_transport(handler), base_url="https://arc.test.com"
+        )
 
         with pytest.raises(ARCError, match="500"):
             await arc.broadcast("hex")
@@ -173,15 +192,20 @@ class TestARCQuery:
     async def test_query_success(self):
         def handler(request: httpx.Request):
             assert "/v1/tx/abc123" in str(request.url)
-            return httpx.Response(200, json={
-                "txid": "abc123",
-                "txStatus": "MINED",
-                "blockHeight": 800000,
-            })
+            return httpx.Response(
+                200,
+                json={
+                    "txid": "abc123",
+                    "txStatus": "MINED",
+                    "blockHeight": 800000,
+                },
+            )
 
         arc = ARCService(_arc_config())
         await arc.connect()
-        arc._client = httpx.AsyncClient(transport=_mock_transport(handler), base_url="https://arc.test.com")
+        arc._client = httpx.AsyncClient(
+            transport=_mock_transport(handler), base_url="https://arc.test.com"
+        )
 
         info = await arc.query_transaction("abc123")
         assert info.txid == "abc123"
@@ -195,7 +219,9 @@ class TestARCQuery:
 
         arc = ARCService(_arc_config())
         await arc.connect()
-        arc._client = httpx.AsyncClient(transport=_mock_transport(handler), base_url="https://arc.test.com")
+        arc._client = httpx.AsyncClient(
+            transport=_mock_transport(handler), base_url="https://arc.test.com"
+        )
 
         with pytest.raises(ARCError, match="404"):
             await arc.query_transaction("missing")
@@ -210,17 +236,22 @@ class TestARCQuery:
 class TestARCPolicy:
     async def test_get_policy(self):
         def handler(request: httpx.Request):
-            return httpx.Response(200, json={
-                "policy": {
-                    "maxScriptSizePolicy": 50_000_000,
-                    "maxTxSizePolicy": 5_000_000,
-                    "miningFee": {"satoshis": 2, "bytes": 1000},
-                }
-            })
+            return httpx.Response(
+                200,
+                json={
+                    "policy": {
+                        "maxScriptSizePolicy": 50_000_000,
+                        "maxTxSizePolicy": 5_000_000,
+                        "miningFee": {"satoshis": 2, "bytes": 1000},
+                    }
+                },
+            )
 
         arc = ARCService(_arc_config())
         await arc.connect()
-        arc._client = httpx.AsyncClient(transport=_mock_transport(handler), base_url="https://arc.test.com")
+        arc._client = httpx.AsyncClient(
+            transport=_mock_transport(handler), base_url="https://arc.test.com"
+        )
 
         policy = await arc.get_policy()
         assert policy.max_tx_size_policy == 5_000_000
@@ -233,13 +264,15 @@ class TestARCPolicy:
         def handler(request: httpx.Request):
             nonlocal call_count
             call_count += 1
-            return httpx.Response(200, json={
-                "policy": {"miningFee": {"satoshis": 3, "bytes": 1000}}
-            })
+            return httpx.Response(
+                200, json={"policy": {"miningFee": {"satoshis": 3, "bytes": 1000}}}
+            )
 
         arc = ARCService(_arc_config())
         await arc.connect()
-        arc._client = httpx.AsyncClient(transport=_mock_transport(handler), base_url="https://arc.test.com")
+        arc._client = httpx.AsyncClient(
+            transport=_mock_transport(handler), base_url="https://arc.test.com"
+        )
 
         fee1 = await arc.get_fee_unit()
         fee2 = await arc.get_fee_unit()
@@ -254,7 +287,9 @@ class TestARCPolicy:
 
         arc = ARCService(_arc_config())
         await arc.connect()
-        arc._client = httpx.AsyncClient(transport=_mock_transport(handler), base_url="https://arc.test.com")
+        arc._client = httpx.AsyncClient(
+            transport=_mock_transport(handler), base_url="https://arc.test.com"
+        )
 
         fee = await arc.get_fee_unit()
         assert fee.satoshis == 1  # Default fallback

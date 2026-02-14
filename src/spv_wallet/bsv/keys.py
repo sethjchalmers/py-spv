@@ -30,8 +30,8 @@ _CURVE_ORDER = _CURVE.order
 _CURVE_GEN = _CURVE.generator
 
 # BIP32 version bytes (mainnet)
-_XPUB_VERSION = b"\x04\x88\xB2\x1E"  # xpub
-_XPRV_VERSION = b"\x04\x88\xAD\xE4"  # xprv
+_XPUB_VERSION = b"\x04\x88\xb2\x1e"  # xpub
+_XPRV_VERSION = b"\x04\x88\xad\xe4"  # xprv
 
 # BIP32 seed HMAC key
 _MASTER_HMAC_KEY = b"Bitcoin seed"
@@ -175,7 +175,7 @@ def verify_signature(pubkey_bytes: bytes, message_hash: bytes, signature: bytes)
     vk = VerifyingKey.from_string(raw_key, curve=_CURVE)
     try:
         return vk.verify_digest(signature, message_hash, sigdecode=_der_decode)
-    except Exception:  # noqa: BLE001
+    except Exception:
         return False
 
 
@@ -282,10 +282,7 @@ class ExtendedKey:
         parent_fp = data[5:9]
         child_index = struct.unpack(">I", data[9:13])[0]
         chain_code = data[13:45]
-        if is_private:
-            key = data[46:78]  # skip the 0x00 padding byte
-        else:
-            key = data[45:78]
+        key = data[46:78] if is_private else data[45:78]
         return cls(
             key=key,
             chain_code=chain_code,
@@ -406,13 +403,13 @@ class ExtendedKey:
         """Create a master private extended key from a BIP32 seed.
 
         Args:
-            seed: 16–64 byte seed (typically 32 from BIP39 mnemonic).
+            seed: 16-64 byte seed (typically 32 from BIP39 mnemonic).
 
         Raises:
             ValueError: If seed length is out of range.
         """
         if not 16 <= len(seed) <= 64:
-            msg = f"Seed must be 16–64 bytes, got {len(seed)}"
+            msg = f"Seed must be 16-64 bytes, got {len(seed)}"
             raise ValueError(msg)
         hmac_result = hmac.new(_MASTER_HMAC_KEY, seed, hashlib.sha512).digest()
         il, ir = hmac_result[:32], hmac_result[32:]

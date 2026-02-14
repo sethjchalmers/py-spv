@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from spv_wallet.bsv.keys import ExtendedKey, private_key_to_public_key
+from spv_wallet.bsv.keys import ExtendedKey
 from spv_wallet.bsv.script import (
     OpCode,
     ScriptType,

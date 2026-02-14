@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from PySide6.QtCore import Qt, Slot
 from PySide6.QtWidgets import (
@@ -16,8 +16,10 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from spv_wallet.desktop.wallet_api import WalletAPI
 from spv_wallet.desktop.widgets.common import heading_label
+
+if TYPE_CHECKING:
+    from spv_wallet.desktop.wallet_api import WalletAPI
 
 # Column definitions
 _COLUMNS = ["Status", "Direction", "Amount (sats)", "Fee", "Date", "Block"]
@@ -82,7 +84,9 @@ class HistoryPanel(QWidget):
             self._table.setItem(row, 4, QTableWidgetItem(tx.get("created_at", "")))
             block = tx.get("block_height", 0)
             self._table.setItem(
-                row, 5, QTableWidgetItem(str(block) if block else "—"),
+                row,
+                5,
+                QTableWidgetItem(str(block) if block else "—"),
             )
 
             # Colour-code status

@@ -23,9 +23,7 @@ class AccessKey(Base, TimestampMixin, MetadataMixin, ModelOps):
     xpub_id: Mapped[str] = mapped_column(
         String(64), nullable=False, index=True, comment="Owning xPub ID"
     )
-    key: Mapped[str] = mapped_column(
-        Text, nullable=False, comment="Compressed public key hex"
-    )
+    key: Mapped[str] = mapped_column(Text, nullable=False, comment="Compressed public key hex")
 
     def __repr__(self) -> str:
         return f"<AccessKey id={self.id[:16]}... xpub={self.xpub_id[:16]}...>"

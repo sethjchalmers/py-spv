@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
     from spv_wallet.config.settings import CacheConfig
@@ -18,7 +18,7 @@ class CacheClient:
             config: Cache configuration with engine type and connection params.
         """
         self._config = config
-        self._backend: RedisCache | MemoryCache | None = None
+        self._backend: CacheBackend | None = None
         self._connected = False
 
     async def connect(self) -> None:
@@ -132,10 +132,6 @@ class CacheClient:
             raise RuntimeError(msg)
 
 
-# Type hints for backend protocol
-from typing import Protocol
-
-
 class CacheBackend(Protocol):
     """Protocol for cache backend implementations."""
 
@@ -146,4 +142,3 @@ class CacheBackend(Protocol):
     async def delete(self, key: str) -> None: ...
     async def exists(self, key: str) -> bool: ...
     async def flush(self) -> None: ...
-

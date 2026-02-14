@@ -9,10 +9,8 @@ The wizard runs before the main window is shown.  Flow:
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
-from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QFileDialog,
     QHBoxLayout,
@@ -23,9 +21,9 @@ from PySide6.QtWidgets import (
     QRadioButton,
     QTextEdit,
     QVBoxLayout,
+    QWidget,
     QWizard,
     QWizardPage,
-    QWidget,
 )
 
 # Page IDs for non-linear navigation
@@ -42,7 +40,7 @@ _PAGE_IMPORT = 3
 
 def _generate_mnemonic() -> str:
     """Generate a 12-word BIP39 mnemonic seed phrase."""
-    from mnemonic import Mnemonic  # noqa: PLC0415
+    from mnemonic import Mnemonic
 
     m = Mnemonic("english")
     return m.generate(strength=128)  # 12 words
@@ -53,9 +51,9 @@ def _mnemonic_to_xpub(words: str) -> str:
 
     Derivation path: m/44'/236'/0'  (BSV BIP44).
     """
-    from mnemonic import Mnemonic  # noqa: PLC0415
+    from mnemonic import Mnemonic
 
-    from spv_wallet.bsv.keys import ExtendedKey  # noqa: PLC0415
+    from spv_wallet.bsv.keys import ExtendedKey
 
     m = Mnemonic("english")
     seed = m.to_seed(words.strip())
@@ -202,9 +200,7 @@ class GeneratePage(QWizardPage):
         self._seed_display.setReadOnly(True)
         self._seed_display.setMaximumHeight(120)
         self._seed_display.setProperty("role", "mono")
-        self._seed_display.setStyleSheet(
-            "font-size: 16px; line-height: 1.8; padding: 12px;"
-        )
+        self._seed_display.setStyleSheet("font-size: 16px; line-height: 1.8; padding: 12px;")
         layout.addWidget(self._seed_display)
 
         # Warning
@@ -241,7 +237,9 @@ class GeneratePage(QWizardPage):
         words = self._mnemonic.split()
         lines = []
         for i in range(0, len(words), 3):
-            row = "    ".join(f"{i + j + 1:2d}. {words[i + j]}" for j in range(3) if i + j < len(words))
+            row = "    ".join(
+                f"{i + j + 1:2d}. {words[i + j]}" for j in range(3) if i + j < len(words)
+            )
             lines.append(row)
         self._seed_display.setText("\n".join(lines))
 
@@ -273,9 +271,7 @@ class ImportPage(QWizardPage):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setTitle("Import Wallet")
-        self.setSubTitle(
-            "Restore from a seed phrase, or paste a raw xPub for watch-only mode."
-        )
+        self.setSubTitle("Restore from a seed phrase, or paste a raw xPub for watch-only mode.")
 
         layout = QVBoxLayout(self)
         layout.setSpacing(12)
@@ -347,14 +343,16 @@ class ImportPage(QWizardPage):
                 xpub = _mnemonic_to_xpub(words)
                 self._xpub_holder.setText(xpub)
                 return True
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 QMessageBox.warning(
-                    self, "Invalid seed phrase", f"Could not derive wallet:\n{exc}",
+                    self,
+                    "Invalid seed phrase",
+                    f"Could not derive wallet:\n{exc}",
                 )
                 return False
         else:
             text = self._xpub_input.toPlainText().strip()
-            if not text.startswith("xpub") or len(text) < 80:  # noqa: PLR2004
+            if not text.startswith("xpub") or len(text) < 80:
                 QMessageBox.warning(
                     self,
                     "Invalid xPub",

@@ -3,8 +3,8 @@
 from spv_wallet.chain.bhs.models import (
     ConfirmationState,
     MerkleRootConfirmation,
-    MerkleRootVerification,
     MerkleRootsResponse,
+    MerkleRootVerification,
     VerifyMerkleRootsResponse,
 )
 from spv_wallet.chain.bhs.service import BHSService

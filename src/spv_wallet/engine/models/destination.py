@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
-
-from sqlalchemy import JSON, Integer, String, Text
+from sqlalchemy import Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from spv_wallet.engine.models.base import Base, MetadataMixin, ModelOps, TimestampMixin
@@ -34,9 +32,7 @@ class Destination(Base, TimestampMixin, MetadataMixin, ModelOps):
     chain: Mapped[int] = mapped_column(
         Integer, nullable=False, comment="BIP32 chain (0=external, 1=internal)"
     )
-    num: Mapped[int] = mapped_column(
-        Integer, nullable=False, comment="BIP32 index within chain"
-    )
+    num: Mapped[int] = mapped_column(Integer, nullable=False, comment="BIP32 index within chain")
     address: Mapped[str] = mapped_column(
         String(64), nullable=False, index=True, comment="Base58Check P2PKH address"
     )

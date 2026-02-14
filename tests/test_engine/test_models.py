@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import AsyncIterator
+from datetime import UTC
+from typing import TYPE_CHECKING
 
 import pytest
 from sqlalchemy import select, text
@@ -10,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from spv_wallet.engine.models import (
     ALL_MODELS,
+    UTXO,
     AccessKey,
     Base,
     Contact,
@@ -17,11 +19,12 @@ from spv_wallet.engine.models import (
     DraftTransaction,
     PaymailAddress,
     Transaction,
-    UTXO,
     Webhook,
     Xpub,
 )
 
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -452,9 +455,7 @@ class TestQueries:
         )
         await session.commit()
 
-        result = await session.execute(
-            select(UTXO).where(UTXO.xpub_id == xpub_id)
-        )
+        result = await session.execute(select(UTXO).where(UTXO.xpub_id == xpub_id))
         utxos = result.scalars().all()
         assert len(utxos) == 3
 
@@ -470,15 +471,13 @@ class TestQueries:
             )
         await session.commit()
 
-        result = await session.execute(
-            select(Contact).where(Contact.status == "unconfirmed")
-        )
+        result = await session.execute(select(Contact).where(Contact.status == "unconfirmed"))
         contacts = result.scalars().all()
         assert len(contacts) == 2
 
     async def test_soft_delete_via_deleted_at(self, session: AsyncSession) -> None:
         """Verify deleted_at is None by default and can be set."""
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         xpub = Xpub(id="del" + "0" * 61, current_balance=0)
         session.add(xpub)
@@ -489,7 +488,7 @@ class TestQueries:
         assert result.deleted_at is None
 
         # "Soft delete"
-        result.deleted_at = datetime.now(tz=timezone.utc)
+        result.deleted_at = datetime.now(tz=UTC)
         await session.commit()
 
         result = await session.get(Xpub, "del" + "0" * 61)

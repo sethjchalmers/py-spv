@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy import String, Text
+from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from spv_wallet.engine.models.base import Base, MetadataMixin, ModelOps, TimestampMixin
@@ -16,9 +16,7 @@ class Contact(Base, TimestampMixin, MetadataMixin, ModelOps):
 
     __tablename__ = "contacts"
 
-    id: Mapped[str] = mapped_column(
-        String(64), primary_key=True, comment="Unique contact ID"
-    )
+    id: Mapped[str] = mapped_column(String(64), primary_key=True, comment="Unique contact ID")
     xpub_id: Mapped[str] = mapped_column(
         String(64), nullable=False, index=True, comment="Owning xPub ID"
     )
@@ -32,7 +30,9 @@ class Contact(Base, TimestampMixin, MetadataMixin, ModelOps):
         String(130), nullable=False, default="", comment="Contact's public key hex"
     )
     status: Mapped[str] = mapped_column(
-        String(32), nullable=False, default="unconfirmed",
+        String(32),
+        nullable=False,
+        default="unconfirmed",
         comment="unconfirmed | awaiting | confirmed | rejected",
     )
 

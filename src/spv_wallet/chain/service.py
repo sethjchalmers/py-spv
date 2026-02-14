@@ -8,12 +8,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from spv_wallet.chain.arc.models import FeeUnit, TXInfo
 from spv_wallet.chain.arc.service import ARCService
-from spv_wallet.chain.bhs.models import MerkleRootVerification, VerifyMerkleRootsResponse
 from spv_wallet.chain.bhs.service import BHSService
 
 if TYPE_CHECKING:
+    from spv_wallet.chain.arc.models import FeeUnit, TXInfo
+    from spv_wallet.chain.bhs.models import MerkleRootVerification, VerifyMerkleRootsResponse
     from spv_wallet.config.settings import AppConfig
 
 

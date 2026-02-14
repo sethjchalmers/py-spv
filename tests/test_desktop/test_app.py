@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import pytest
 
-
 # ============================================================================
 # Theme tests (no Qt dependency)
 # ============================================================================
@@ -46,7 +45,7 @@ class TestTheme:
     def test_dark_stylesheet_singleton(self) -> None:
         from spv_wallet.desktop.theme import DARK_STYLESHEET, build_stylesheet
 
-        assert DARK_STYLESHEET == build_stylesheet()
+        assert build_stylesheet() == DARK_STYLESHEET
 
     def test_palette_is_frozen(self) -> None:
         from spv_wallet.desktop.theme import PALETTE
@@ -58,9 +57,17 @@ class TestTheme:
         from spv_wallet.desktop.theme import DARK_STYLESHEET
 
         for widget in (
-            "QPushButton", "QLineEdit", "QTableWidget", "QComboBox",
-            "QTabBar", "QScrollBar", "QStatusBar", "QToolTip",
-            "QWizard", "QProgressBar", "QMenuBar",
+            "QPushButton",
+            "QLineEdit",
+            "QTableWidget",
+            "QComboBox",
+            "QTabBar",
+            "QScrollBar",
+            "QStatusBar",
+            "QToolTip",
+            "QWizard",
+            "QProgressBar",
+            "QMenuBar",
         ):
             assert widget in DARK_STYLESHEET, f"{widget} not styled"
 
@@ -105,4 +112,3 @@ class TestAsyncWorker:
         signals = _WorkerSignals()
         assert hasattr(signals, "finished")
         assert hasattr(signals, "error")
-

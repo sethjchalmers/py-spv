@@ -9,7 +9,6 @@ from spv_wallet.datastore.client import Datastore
 from spv_wallet.datastore.engines import create_engine
 from spv_wallet.engine.models.base import Base
 
-
 # ---------------------------------------------------------------------------
 # Engine factory
 # ---------------------------------------------------------------------------
@@ -58,7 +57,7 @@ class TestDatastore:
         await ds.close()
         assert not ds.is_open
 
-    async def test_engine_property_when_closed(self) -> None:  # noqa: ASYNC910
+    async def test_engine_property_when_closed(self) -> None:
         config = DatabaseConfig(
             engine=DatabaseEngine.SQLITE,
             dsn="sqlite+aiosqlite:///:memory:",
@@ -67,7 +66,7 @@ class TestDatastore:
         with pytest.raises(RuntimeError, match="not open"):
             _ = ds.engine
 
-    async def test_session_when_closed(self) -> None:  # noqa: ASYNC910
+    async def test_session_when_closed(self) -> None:
         config = DatabaseConfig(
             engine=DatabaseEngine.SQLITE,
             dsn="sqlite+aiosqlite:///:memory:",
@@ -85,9 +84,7 @@ class TestDatastore:
         await ds.open(base=Base)
         async with ds.session() as session:
             # Session should be usable
-            result = await session.execute(
-                __import__("sqlalchemy").text("SELECT 1")
-            )
+            result = await session.execute(__import__("sqlalchemy").text("SELECT 1"))
             assert result.scalar() == 1
         await ds.close()
 
@@ -101,9 +98,7 @@ class TestDatastore:
         # Tables should exist (at least we can query without error)
         async with ds.session() as session:
             result = await session.execute(
-                __import__("sqlalchemy").text(
-                    "SELECT name FROM sqlite_master WHERE type='table'"
-                )
+                __import__("sqlalchemy").text("SELECT name FROM sqlite_master WHERE type='table'")
             )
             tables = [row[0] for row in result.fetchall()]
             # Base itself has no tables, but the engine should be functional
@@ -140,9 +135,7 @@ class TestDatastore:
         ds = Datastore(config)
         await ds.open(base=Base)
         async for session in ds.session_iterator():
-            result = await session.execute(
-                __import__("sqlalchemy").text("SELECT 1")
-            )
+            result = await session.execute(__import__("sqlalchemy").text("SELECT 1"))
             assert result.scalar() == 1
         await ds.close()
 

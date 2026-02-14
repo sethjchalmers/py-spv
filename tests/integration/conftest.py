@@ -7,13 +7,16 @@ registered xPub, and seeded UTXOs for transaction lifecycle testing.
 
 from __future__ import annotations
 
-from typing import AsyncIterator
+from typing import TYPE_CHECKING
 
 import pytest
 
 from spv_wallet.bsv.keys import ExtendedKey, xpub_id
 from spv_wallet.config.settings import AppConfig, DatabaseConfig, DatabaseEngine
 from spv_wallet.engine.client import SPVWalletEngine
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
 
 # Deterministic test keys (from known seed)
 SEED = bytes.fromhex("000102030405060708090a0b0c0d0e0f")

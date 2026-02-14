@@ -93,7 +93,7 @@ class SPVWalletEngine:
         self._chain = ChainService(self._config)
         try:
             await self._chain.connect()
-        except Exception:  # noqa: BLE001
+        except Exception:
             # Chain service is optional — engine works without it
             self._chain = None
 
@@ -216,7 +216,7 @@ class SPVWalletEngine:
         """
         return self._chain
 
-    async def health_check(self) -> dict[str, str]:  # noqa: ASYNC910
+    async def health_check(self) -> dict[str, str]:
         """Check health status of all engine components.
 
         Returns:
@@ -249,4 +249,3 @@ class SPVWalletEngine:
                 status["chain"] = "not_connected"
 
         return status
-

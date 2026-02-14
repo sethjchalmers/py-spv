@@ -157,9 +157,7 @@ class UTXOService:
             result = await session.execute(stmt)
             return result.scalar_one()
 
-    async def mark_spent(
-        self, id_: str, spending_tx_id: str
-    ) -> UTXO:
+    async def mark_spent(self, id_: str, spending_tx_id: str) -> UTXO:
         """Mark a UTXO as spent by a transaction.
 
         Args:
@@ -195,22 +193,17 @@ class UTXOService:
         Returns:
             Total satoshis in unspent UTXOs.
         """
-        stmt = (
-            select(func.coalesce(func.sum(UTXO.satoshis), 0))
-            .where(
-                UTXO.xpub_id == xpub_id,
-                UTXO.spending_tx_id == "",
-                UTXO.deleted_at.is_(None),
-            )
+        stmt = select(func.coalesce(func.sum(UTXO.satoshis), 0)).where(
+            UTXO.xpub_id == xpub_id,
+            UTXO.spending_tx_id == "",
+            UTXO.deleted_at.is_(None),
         )
 
         async with self._engine.datastore.session() as session:
             result = await session.execute(stmt)
             return result.scalar_one()
 
-    async def get_unspent_for_draft(
-        self, xpub_id: str, *, required_sats: int
-    ) -> list[UTXO]:
+    async def get_unspent_for_draft(self, xpub_id: str, *, required_sats: int) -> list[UTXO]:
         """Select unspent UTXOs to cover a required amount.
 
         Uses a simple greedy approach — largest UTXOs first.
@@ -227,9 +220,7 @@ class UTXOService:
         """
         from spv_wallet.errors.definitions import ErrNotEnoughFunds
 
-        utxos = await self.get_utxos(
-            xpub_id=xpub_id, unspent_only=True
-        )
+        utxos = await self.get_utxos(xpub_id=xpub_id, unspent_only=True)
 
         selected: list[UTXO] = []
         total = 0

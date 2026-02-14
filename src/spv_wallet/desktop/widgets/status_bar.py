@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PySide6.QtWidgets import QLabel, QStatusBar, QWidget
+from PySide6.QtWidgets import QStatusBar, QWidget
 
 from spv_wallet.desktop.widgets.common import caption_label
 

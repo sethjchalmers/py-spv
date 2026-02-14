@@ -12,7 +12,7 @@ from spv_wallet.config.settings import CacheConfig, CacheEngine
 class TestCacheClient:
     """Test cache client with in-memory backend."""
 
-    async def test_init(self) -> None:  # noqa: ASYNC910
+    async def test_init(self) -> None:
         """CacheClient can be instantiated."""
         config = CacheConfig(engine=CacheEngine.MEMORY)
         client = CacheClient(config)

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from spv_wallet.chain.arc.models import FeeUnit, PolicyResponse, TXInfo, TXStatus
 
-
 # ---------------------------------------------------------------------------
 # TXStatus
 # ---------------------------------------------------------------------------
@@ -27,10 +26,16 @@ class TestTXStatus:
 
     def test_status_lifecycle_order(self):
         lifecycle = [
-            TXStatus.QUEUED, TXStatus.RECEIVED, TXStatus.STORED,
-            TXStatus.ANNOUNCED_TO_NETWORK, TXStatus.REQUESTED_BY_NETWORK,
-            TXStatus.SENT_TO_NETWORK, TXStatus.ACCEPTED_BY_NETWORK,
-            TXStatus.SEEN_ON_NETWORK, TXStatus.MINED, TXStatus.CONFIRMED,
+            TXStatus.QUEUED,
+            TXStatus.RECEIVED,
+            TXStatus.STORED,
+            TXStatus.ANNOUNCED_TO_NETWORK,
+            TXStatus.REQUESTED_BY_NETWORK,
+            TXStatus.SENT_TO_NETWORK,
+            TXStatus.ACCEPTED_BY_NETWORK,
+            TXStatus.SEEN_ON_NETWORK,
+            TXStatus.MINED,
+            TXStatus.CONFIRMED,
         ]
         assert len(lifecycle) == 10
 
@@ -97,8 +102,10 @@ class TestTXInfo:
 
     def test_roundtrip(self):
         info = TXInfo(
-            txid="deadbeef", tx_status="SEEN_ON_NETWORK",
-            block_height=0, timestamp=12345,
+            txid="deadbeef",
+            tx_status="SEEN_ON_NETWORK",
+            block_height=0,
+            timestamp=12345,
         )
         info2 = TXInfo.from_dict(info.to_dict())
         assert info.txid == info2.txid

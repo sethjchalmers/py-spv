@@ -45,7 +45,7 @@ class ARCService:
         self._client: httpx.AsyncClient | None = None
         self._cached_fee_unit: FeeUnit | None = None
 
-    async def connect(self) -> None:  # noqa: ASYNC910
+    async def connect(self) -> None:
         """Create the underlying HTTP client."""
         headers: dict[str, str] = {
             "Content-Type": "application/json",
@@ -204,7 +204,7 @@ class ARCService:
         try:
             body = response.json()
             detail = body.get("detail", body.get("title", response.text))
-        except Exception:  # noqa: BLE001
+        except Exception:
             detail = response.text
 
         # Map ARC-specific status codes

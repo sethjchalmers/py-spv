@@ -14,8 +14,8 @@ import httpx
 
 from spv_wallet.chain.bhs.models import (
     ConfirmationState,
-    MerkleRootVerification,
     MerkleRootsResponse,
+    MerkleRootVerification,
     VerifyMerkleRootsResponse,
 )
 from spv_wallet.errors.chain_errors import BHSError
@@ -46,7 +46,7 @@ class BHSService:
         self._config = config
         self._client: httpx.AsyncClient | None = None
 
-    async def connect(self) -> None:  # noqa: ASYNC910
+    async def connect(self) -> None:
         """Create the underlying HTTP client."""
         headers: dict[str, str] = {
             "Content-Type": "application/json",
@@ -189,7 +189,7 @@ class BHSService:
         try:
             body = response.json()
             detail = body.get("detail", body.get("message", response.text))
-        except Exception:  # noqa: BLE001
+        except Exception:
             detail = response.text
 
         message = f"BHS {operation} failed ({status}): {detail}"

@@ -107,4 +107,3 @@ class RedisCache:
         """Flush all keys from Redis (use with caution!)."""
         assert self._redis is not None
         await self._redis.flushdb()
-

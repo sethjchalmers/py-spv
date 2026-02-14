@@ -15,7 +15,6 @@ from spv_wallet.bsv.merkle import (
 from spv_wallet.bsv.transaction import encode_varint
 from spv_wallet.utils.crypto import sha256d
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -102,7 +101,7 @@ class TestMerklePathFromHex:
             levels=[
                 [
                     (0, 0x02, tx_a[::-1]),  # txid
-                    (1, 0x01, None),        # duplicate
+                    (1, 0x01, None),  # duplicate
                 ],
             ],
         )

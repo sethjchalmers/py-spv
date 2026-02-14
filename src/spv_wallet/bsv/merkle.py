@@ -12,7 +12,6 @@ from dataclasses import dataclass, field
 
 from spv_wallet.utils.crypto import sha256d
 
-
 # ---------------------------------------------------------------------------
 # Merkle path data structures
 # ---------------------------------------------------------------------------
@@ -95,9 +94,7 @@ class MerklePath:
                 is_txid = bool(flags & 0x02)
 
                 if is_duplicate:
-                    node = MerklePathNode(
-                        offset=offset, duplicate=True
-                    )
+                    node = MerklePathNode(offset=offset, duplicate=True)
                 else:
                     hash_bytes = stream.read(32)
                     node = MerklePathNode(
@@ -140,14 +137,9 @@ class MerklePath:
             level = self.path[level_idx]
 
             # Find the sibling
-            if working_offset % 2 == 0:
-                sibling_offset = working_offset + 1
-            else:
-                sibling_offset = working_offset - 1
+            sibling_offset = working_offset + 1 if working_offset % 2 == 0 else working_offset - 1
 
-            sibling_hash = self._find_hash_at_level(
-                level, sibling_offset, working_hash
-            )
+            sibling_hash = self._find_hash_at_level(level, sibling_offset, working_hash)
 
             # Combine: lower offset on the left
             if working_offset % 2 == 0:

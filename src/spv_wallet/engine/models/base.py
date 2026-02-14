@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime  # noqa: TC003 - SQLAlchemy needs this at runtime for Mapped[datetime]
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import JSON, DateTime, func, inspect
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 class Base(DeclarativeBase):
     """SQLAlchemy declarative base for all models."""
 
-    type_annotation_map = {
+    type_annotation_map = {  # noqa: RUF012
         dict[str, Any]: JSON,
     }
 
@@ -54,7 +54,7 @@ class MetadataMixin:
 
 class ModelOps:
     """Model operations with engine reference and lifecycle hooks.
-    
+
     This mixin provides:
     - Engine client reference for accessing services
     - New/not_new state tracking
@@ -92,21 +92,21 @@ class ModelOps:
 
     async def before_save(self) -> None:
         """Lifecycle hook called before save.
-        
+
         Override in subclasses to add validation, compute fields, etc.
         """
         pass
 
     async def after_save(self) -> None:
         """Lifecycle hook called after save.
-        
+
         Override in subclasses to trigger side effects, update cache, etc.
         """
         pass
 
     async def save(self) -> None:
         """Save model to database with lifecycle hooks.
-        
+
         Raises:
             RuntimeError: If engine is not set.
         """
@@ -124,11 +124,11 @@ class ModelOps:
 
     def get_metadata(self, key: str, default: Any = None) -> Any:
         """Get metadata value by key.
-        
+
         Args:
             key: Metadata key.
             default: Default value if key not found.
-            
+
         Returns:
             Metadata value or default.
         """
@@ -141,7 +141,7 @@ class ModelOps:
 
     def set_metadata(self, key: str, value: Any) -> None:
         """Set metadata value by key.
-        
+
         Args:
             key: Metadata key.
             value: Value to set.
@@ -150,13 +150,13 @@ class ModelOps:
             return
         metadata = getattr(self, "metadata_", None)
         if metadata is None:
-            setattr(self, "metadata_", {key: value})
+            self.metadata_ = {key: value}
         else:
             metadata[key] = value
 
     def update_metadata(self, updates: dict[str, Any]) -> None:
         """Update multiple metadata values.
-        
+
         Args:
             updates: Dict of key-value pairs to update.
         """
@@ -164,6 +164,6 @@ class ModelOps:
             return
         metadata = getattr(self, "metadata_", None)
         if metadata is None:
-            setattr(self, "metadata_", updates.copy())
+            self.metadata_ = updates.copy()
         else:
             metadata.update(updates)

@@ -15,11 +15,12 @@ from __future__ import annotations
 
 import asyncio
 import traceback
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from PySide6.QtCore import QObject, QRunnable, QThreadPool, Signal, Slot
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Async worker — runs a coroutine on a background thread
@@ -29,8 +30,8 @@ from PySide6.QtCore import QObject, QRunnable, QThreadPool, Signal, Slot
 class _WorkerSignals(QObject):
     """Signals emitted by ``AsyncWorker``."""
 
-    finished = Signal(object)   # result value
-    error = Signal(str, str)    # (title, detail)
+    finished = Signal(object)  # result value
+    error = Signal(str, str)  # (title, detail)
 
 
 class AsyncWorker(QRunnable):
@@ -48,13 +49,13 @@ class AsyncWorker(QRunnable):
         self.setAutoDelete(True)
 
     @Slot()
-    def run(self) -> None:  # noqa: ASYNC910
+    def run(self) -> None:
         """Execute the coroutine (called by QThreadPool)."""
         loop = asyncio.new_event_loop()
         try:
             result = loop.run_until_complete(self.coro_fn(*self.args, **self.kwargs))
             self.signals.finished.emit(result)
-        except Exception:  # noqa: BLE001
+        except Exception:
             tb = traceback.format_exc()
             self.signals.error.emit("Operation failed", tb)
         finally:
@@ -101,8 +102,8 @@ class WalletAPI(QObject):
         super().__init__(parent)
         self._engine: Any = None  # SPVWalletEngine (lazy import)
         self._pool = QThreadPool.globalInstance()
-        self._raw_xpub: str = ""    # raw xPub Base58 string
-        self._xpub_id: str = ""     # sha256 hash of xPub
+        self._raw_xpub: str = ""  # raw xPub Base58 string
+        self._xpub_id: str = ""  # sha256 hash of xPub
 
     # ------------------------------------------------------------------
     # Properties
@@ -196,7 +197,6 @@ class WalletAPI(QObject):
         self._run(self._do_register_xpub, raw_xpub, on_done=self._on_xpub_registered)
 
     async def _do_register_xpub(self, raw_xpub: str) -> str:
-        from spv_wallet.bsv.keys import xpub_id
 
         xpub = await self._engine.xpub_service.new_xpub(raw_xpub)
         return xpub.id
@@ -230,13 +230,15 @@ class WalletAPI(QObject):
         if not self._raw_xpub:
             return
         self._run(
-            self._do_generate_address, self._raw_xpub,
+            self._do_generate_address,
+            self._raw_xpub,
             on_done=self._on_address,
         )
 
     async def _do_generate_address(self, raw_xpub: str) -> tuple[str, str]:
         dest = await self._engine.destination_service.new_destination(
-            raw_xpub, chain=0,
+            raw_xpub,
+            chain=0,
         )
         path = f"m/44'/236'/0'/0/{dest.num}"
         return (dest.address, path)
@@ -253,12 +255,14 @@ class WalletAPI(QObject):
         if not self._xpub_id:
             return
         self._run(
-            self._do_get_transactions, self._xpub_id,
+            self._do_get_transactions,
+            self._xpub_id,
             on_done=self._on_tx_list,
         )
 
     async def _do_get_transactions(
-        self, xpub_id_val: str,
+        self,
+        xpub_id_val: str,
     ) -> list[dict[str, Any]]:
         txs = await self._engine.transaction_service.get_transactions(
             xpub_id_val,
@@ -305,15 +309,20 @@ class WalletAPI(QObject):
             outputs.append({"op_return": op_return})
 
         self._run(
-            self._do_create_draft, self._xpub_id, outputs,
+            self._do_create_draft,
+            self._xpub_id,
+            outputs,
             on_done=self._on_draft_created,
         )
 
     async def _do_create_draft(
-        self, xpub_id_val: str, outputs: list[dict[str, Any]],
+        self,
+        xpub_id_val: str,
+        outputs: list[dict[str, Any]],
     ) -> dict[str, Any]:
         draft = await self._engine.transaction_service.new_transaction(
-            xpub_id_val, outputs=outputs,
+            xpub_id_val,
+            outputs=outputs,
         )
         return {
             "draft_id": draft.id,
@@ -335,15 +344,23 @@ class WalletAPI(QObject):
         if not self._xpub_id:
             return
         self._run(
-            self._do_record_tx, self._xpub_id, hex_body, draft_id,
+            self._do_record_tx,
+            self._xpub_id,
+            hex_body,
+            draft_id,
             on_done=self._on_tx_recorded,
         )
 
     async def _do_record_tx(
-        self, xpub_id_val: str, hex_body: str, draft_id: str,
+        self,
+        xpub_id_val: str,
+        hex_body: str,
+        draft_id: str,
     ) -> dict[str, Any]:
         tx = await self._engine.transaction_service.record_transaction(
-            xpub_id_val, hex_body, draft_id=draft_id,
+            xpub_id_val,
+            hex_body,
+            draft_id=draft_id,
         )
         return {
             "id": tx.id,

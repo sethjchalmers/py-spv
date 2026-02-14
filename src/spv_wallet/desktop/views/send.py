@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from PySide6.QtCore import Qt, Slot
 from PySide6.QtWidgets import (
@@ -15,9 +15,11 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from spv_wallet.desktop.wallet_api import WalletAPI
 from spv_wallet.desktop.widgets.amount_edit import AmountEdit
 from spv_wallet.desktop.widgets.common import Card, Separator, caption_label, heading_label
+
+if TYPE_CHECKING:
+    from spv_wallet.desktop.wallet_api import WalletAPI
 
 
 class SendPanel(QWidget):
@@ -127,7 +129,8 @@ class SendPanel(QWidget):
         fee = info.get("fee", 0)
         self._status.setText(f"Draft created: {draft_id[:12]}… (fee: {fee} sats)")
         QMessageBox.information(
-            self, "Draft Created",
+            self,
+            "Draft Created",
             f"Transaction draft created.\n\n"
             f"Draft ID: {draft_id}\n"
             f"Fee: {fee} sats\n\n"

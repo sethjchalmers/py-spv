@@ -149,13 +149,9 @@ class TestIncrementChain:
 
     async def test_increment_batch(self, engine: SPVWalletEngine) -> None:
         await engine.xpub_service.new_xpub(_XPUB)
-        start = await engine.xpub_service.increment_chain(
-            _XPUB_ID, chain=0, count=5
-        )
+        start = await engine.xpub_service.increment_chain(_XPUB_ID, chain=0, count=5)
         assert start == 0
-        start = await engine.xpub_service.increment_chain(
-            _XPUB_ID, chain=0, count=3
-        )
+        start = await engine.xpub_service.increment_chain(_XPUB_ID, chain=0, count=3)
         assert start == 5
 
     async def test_increment_not_found(self, engine: SPVWalletEngine) -> None:

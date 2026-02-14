@@ -38,18 +38,14 @@ class TestPubkeyToAddress:
 
     def test_address_from_known_privkey(self) -> None:
         """Known private key → public key → address."""
-        privkey = bytes.fromhex(
-            "e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35"
-        )
+        privkey = bytes.fromhex("e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35")
         pubkey = private_key_to_public_key(privkey, compressed=True)
         address = pubkey_to_address(pubkey)
         assert address.startswith("1")
         assert len(address) >= 25
 
     def test_uncompressed_pubkey_address(self) -> None:
-        privkey = bytes.fromhex(
-            "e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35"
-        )
+        privkey = bytes.fromhex("e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35")
         pubkey = private_key_to_public_key(privkey, compressed=False)
         address = pubkey_to_address(pubkey)
         assert address.startswith("1")
@@ -97,9 +93,7 @@ class TestWIF:
     """Wallet Import Format encoding/decoding."""
 
     def test_wif_compressed_mainnet(self) -> None:
-        privkey = bytes.fromhex(
-            "e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35"
-        )
+        privkey = bytes.fromhex("e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35")
         wif = privkey_to_wif(privkey, compressed=True, testnet=False)
         assert wif.startswith(("5", "K", "L"))
         decoded, compressed, testnet = wif_to_privkey(wif)
@@ -108,9 +102,7 @@ class TestWIF:
         assert testnet is False
 
     def test_wif_uncompressed_mainnet(self) -> None:
-        privkey = bytes.fromhex(
-            "e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35"
-        )
+        privkey = bytes.fromhex("e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35")
         wif = privkey_to_wif(privkey, compressed=False, testnet=False)
         decoded, compressed, testnet = wif_to_privkey(wif)
         assert decoded == privkey
@@ -118,9 +110,7 @@ class TestWIF:
         assert testnet is False
 
     def test_wif_compressed_testnet(self) -> None:
-        privkey = bytes.fromhex(
-            "e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35"
-        )
+        privkey = bytes.fromhex("e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35")
         wif = privkey_to_wif(privkey, compressed=True, testnet=True)
         decoded, compressed, testnet = wif_to_privkey(wif)
         assert decoded == privkey

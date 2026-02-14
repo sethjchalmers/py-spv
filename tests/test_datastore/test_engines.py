@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from spv_wallet.config.settings import DatabaseConfig
 from spv_wallet.datastore.engines import create_engine

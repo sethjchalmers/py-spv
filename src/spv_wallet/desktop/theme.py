@@ -13,44 +13,44 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-
 # ---------------------------------------------------------------------------
 # Colour palette
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True, slots=True)
 class Palette:
     """Named colour tokens — single source of truth."""
 
     # Backgrounds (VSCode layering)
-    bg_base: str = "#1e1e1e"        # editor background
-    bg_surface: str = "#252526"     # side-bar / panels
-    bg_elevated: str = "#2d2d2d"    # cards, dialogs
-    bg_input: str = "#3c3c3c"       # text inputs, dropdowns
-    bg_hover: str = "#2a2d2e"       # list-item / button hover
-    bg_selected: str = "#37373d"    # selected row / tab
+    bg_base: str = "#1e1e1e"  # editor background
+    bg_surface: str = "#252526"  # side-bar / panels
+    bg_elevated: str = "#2d2d2d"  # cards, dialogs
+    bg_input: str = "#3c3c3c"  # text inputs, dropdowns
+    bg_hover: str = "#2a2d2e"  # list-item / button hover
+    bg_selected: str = "#37373d"  # selected row / tab
 
     # Borders
-    border: str = "#3e3e42"         # subtle separator
-    border_focus: str = "#eab308"   # focused input ring (BSV gold)
+    border: str = "#3e3e42"  # subtle separator
+    border_focus: str = "#eab308"  # focused input ring (BSV gold)
 
     # Text
-    text_primary: str = "#e4e4e4"   # body text
-    text_secondary: str = "#969696" # labels, hints
-    text_muted: str = "#6a6a6a"     # disabled, placeholder
-    text_inverse: str = "#1e1e1e"   # text on accent buttons
+    text_primary: str = "#e4e4e4"  # body text
+    text_secondary: str = "#969696"  # labels, hints
+    text_muted: str = "#6a6a6a"  # disabled, placeholder
+    text_inverse: str = "#1e1e1e"  # text on accent buttons
 
     # BSV accent (yellow / gold)
-    accent: str = "#eab308"         # primary action
-    accent_hover: str = "#facc15"   # button hover
-    accent_pressed: str = "#ca8a04" # button pressed
-    accent_muted: str = "#854d0e"   # subtle badge / tag
+    accent: str = "#eab308"  # primary action
+    accent_hover: str = "#facc15"  # button hover
+    accent_pressed: str = "#ca8a04"  # button pressed
+    accent_muted: str = "#854d0e"  # subtle badge / tag
 
     # Semantic
-    success: str = "#22c55e"        # confirmed, synced
-    warning: str = "#f59e0b"        # pending, unconfirmed
-    error: str = "#ef4444"          # failed, invalid
-    info: str = "#3b82f6"           # informational
+    success: str = "#22c55e"  # confirmed, synced
+    warning: str = "#f59e0b"  # pending, unconfirmed
+    error: str = "#ef4444"  # failed, invalid
+    info: str = "#3b82f6"  # informational
 
     # Scrollbar
     scrollbar_bg: str = "#1e1e1e"
@@ -67,17 +67,15 @@ PALETTE = Palette()
 
 # Font stack — system fonts first (renders natively on every OS + mobile),
 # then fallback to monospace for addresses / hashes.
-FONT_FAMILY = (
-    '".AppleSystemUIFont", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
-)
+FONT_FAMILY = '".AppleSystemUIFont", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
 FONT_MONO = '"SF Mono", "Cascadia Code", "Fira Code", Consolas, monospace'
 
-FONT_SIZE_XS = 11    # captions, timestamps
-FONT_SIZE_SM = 13    # secondary labels
-FONT_SIZE_MD = 14    # body text (default)
-FONT_SIZE_LG = 16    # sub-headings
-FONT_SIZE_XL = 20    # panel titles
-FONT_SIZE_XXL = 28   # hero balance display
+FONT_SIZE_XS = 11  # captions, timestamps
+FONT_SIZE_SM = 13  # secondary labels
+FONT_SIZE_MD = 14  # body text (default)
+FONT_SIZE_LG = 16  # sub-headings
+FONT_SIZE_XL = 20  # panel titles
+FONT_SIZE_XXL = 28  # hero balance display
 
 # ---------------------------------------------------------------------------
 # Spacing & sizing
@@ -102,7 +100,8 @@ INPUT_HEIGHT = 36
 # QSS stylesheet
 # ---------------------------------------------------------------------------
 
-def build_stylesheet(p: Palette | None = None) -> str:  # noqa: C901
+
+def build_stylesheet(p: Palette | None = None) -> str:
     """Generate a complete Qt Style Sheet for the application.
 
     Args:

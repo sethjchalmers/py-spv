@@ -14,11 +14,14 @@ Flow:
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
-from spv_wallet.engine.client import SPVWalletEngine
-
 from .conftest import RAW_XPUB, XPUB_ID, seed_utxos
+
+if TYPE_CHECKING:
+    from spv_wallet.engine.client import SPVWalletEngine
 
 
 @pytest.mark.integration
@@ -43,11 +46,13 @@ class TestWalletLifecycle:
         assert fetched.id == XPUB_ID
 
     async def test_derive_destination(
-        self, engine_with_xpub: SPVWalletEngine,
+        self,
+        engine_with_xpub: SPVWalletEngine,
     ) -> None:
         """Derive a receiving address from the registered xPub."""
         dest = await engine_with_xpub.destination_service.new_destination(
-            RAW_XPUB, chain=0,
+            RAW_XPUB,
+            chain=0,
         )
         assert dest.address  # non-empty
         assert dest.chain == 0
@@ -55,13 +60,15 @@ class TestWalletLifecycle:
 
         # Derive a second — index should increment
         dest2 = await engine_with_xpub.destination_service.new_destination(
-            RAW_XPUB, chain=0,
+            RAW_XPUB,
+            chain=0,
         )
         assert dest2.num == 1
         assert dest2.address != dest.address
 
     async def test_balance_with_seeded_utxos(
-        self, engine_with_xpub: SPVWalletEngine,
+        self,
+        engine_with_xpub: SPVWalletEngine,
     ) -> None:
         """Balance reflects seeded UTXOs."""
         await seed_utxos(engine_with_xpub, count=3, sats=25_000)
@@ -69,7 +76,8 @@ class TestWalletLifecycle:
         assert balance == 75_000
 
     async def test_create_and_query_transaction(
-        self, engine_with_xpub: SPVWalletEngine,
+        self,
+        engine_with_xpub: SPVWalletEngine,
     ) -> None:
         """Create a draft transaction and query it back."""
         # Seed enough UTXOs
@@ -78,7 +86,8 @@ class TestWalletLifecycle:
         # Create draft
         outputs = [{"to": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", "satoshis": 5_000}]
         draft = await engine_with_xpub.transaction_service.new_transaction(
-            XPUB_ID, outputs=outputs,
+            XPUB_ID,
+            outputs=outputs,
         )
         assert draft.status == "draft"
         assert draft.id
@@ -89,14 +98,16 @@ class TestWalletLifecycle:
         assert fetched.id == draft.id
 
     async def test_draft_appears_in_draft_query(
-        self, engine_with_xpub: SPVWalletEngine,
+        self,
+        engine_with_xpub: SPVWalletEngine,
     ) -> None:
         """Created drafts can be queried back."""
         await seed_utxos(engine_with_xpub, count=5, sats=10_000)
 
         outputs = [{"to": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", "satoshis": 1_000}]
         draft = await engine_with_xpub.transaction_service.new_transaction(
-            XPUB_ID, outputs=outputs,
+            XPUB_ID,
+            outputs=outputs,
         )
 
         fetched = await engine_with_xpub.transaction_service.get_draft(draft.id)
@@ -104,7 +115,8 @@ class TestWalletLifecycle:
         assert fetched.id == draft.id
 
     async def test_utxo_count_and_list(
-        self, engine_with_xpub: SPVWalletEngine,
+        self,
+        engine_with_xpub: SPVWalletEngine,
     ) -> None:
         """UTXO count and list match seeded data."""
         await seed_utxos(engine_with_xpub, count=4, sats=8_000)
@@ -122,7 +134,8 @@ class TestWalletLifecycle:
         await engine.close()  # should be idempotent
 
     async def test_access_key_lifecycle(
-        self, engine_with_xpub: SPVWalletEngine,
+        self,
+        engine_with_xpub: SPVWalletEngine,
     ) -> None:
         """Create and retrieve an access key."""
         key, privkey_hex = await engine_with_xpub.access_key_service.new_access_key(

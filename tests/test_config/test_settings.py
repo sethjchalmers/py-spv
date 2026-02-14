@@ -2,18 +2,10 @@
 
 from __future__ import annotations
 
-import os
 import textwrap
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING
 
 import pytest
-
-from spv_wallet.config.settings import (
-    ArcWaitFor,
-    CacheEngine,
-    DatabaseEngine,
-)
 
 from spv_wallet.config.settings import (
     AppConfig,
@@ -31,6 +23,8 @@ from spv_wallet.config.settings import (
     _load_yaml,
 )
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Defaults
@@ -252,9 +246,7 @@ class TestYAML:
         assert cfg.server.port == 4000
         assert cfg.server.host == "127.0.0.1"
 
-    def test_env_overrides_yaml(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_env_overrides_yaml(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Env vars have higher priority than YAML values."""
         f = tmp_path / "app.yaml"
         f.write_text(

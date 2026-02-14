@@ -55,9 +55,7 @@ class TestNewDestination:
 
     async def test_derive_with_metadata(self, engine: SPVWalletEngine) -> None:
         meta = {"purpose": "payment"}
-        dest = await engine.destination_service.new_destination(
-            _XPUB_STR, metadata=meta
-        )
+        dest = await engine.destination_service.new_destination(_XPUB_STR, metadata=meta)
         assert dest.metadata_["purpose"] == "payment"
 
     async def test_deterministic_derivation(self, engine: SPVWalletEngine) -> None:
@@ -67,6 +65,7 @@ class TestNewDestination:
         xpub_key = ExtendedKey.from_string(_XPUB_STR)
         child = xpub_key.derive_child(0).derive_child(0)
         from spv_wallet.bsv.address import pubkey_to_address
+
         expected_addr = pubkey_to_address(child.public_key())
         assert dest.address == expected_addr
 
@@ -75,19 +74,13 @@ class TestNewDestinationAt:
     """Test destination derivation at specific index."""
 
     async def test_derive_at_specific_index(self, engine: SPVWalletEngine) -> None:
-        dest = await engine.destination_service.new_destination_at(
-            _XPUB_STR, chain=0, num=5
-        )
+        dest = await engine.destination_service.new_destination_at(_XPUB_STR, chain=0, num=5)
         assert dest.chain == 0
         assert dest.num == 5
 
     async def test_idempotent(self, engine: SPVWalletEngine) -> None:
-        d1 = await engine.destination_service.new_destination_at(
-            _XPUB_STR, chain=0, num=3
-        )
-        d2 = await engine.destination_service.new_destination_at(
-            _XPUB_STR, chain=0, num=3
-        )
+        d1 = await engine.destination_service.new_destination_at(_XPUB_STR, chain=0, num=3)
+        d2 = await engine.destination_service.new_destination_at(_XPUB_STR, chain=0, num=3)
         assert d1.id == d2.id
 
 

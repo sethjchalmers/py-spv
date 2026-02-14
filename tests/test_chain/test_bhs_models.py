@@ -5,11 +5,10 @@ from __future__ import annotations
 from spv_wallet.chain.bhs.models import (
     ConfirmationState,
     MerkleRootConfirmation,
-    MerkleRootVerification,
     MerkleRootsResponse,
+    MerkleRootVerification,
     VerifyMerkleRootsResponse,
 )
-
 
 # ---------------------------------------------------------------------------
 # ConfirmationState

@@ -104,7 +104,7 @@ class MainWindow(QMainWindow):
         layout.setSpacing(4)
 
         # App title
-        from spv_wallet.desktop.widgets.common import heading_label  # noqa: PLC0415
+        from spv_wallet.desktop.widgets.common import heading_label
 
         title = heading_label("py-spv")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)

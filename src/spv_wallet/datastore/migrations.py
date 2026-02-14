@@ -6,9 +6,12 @@ matching the Go ``AutoMigrate`` behavior.
 
 from __future__ import annotations
 
-from sqlalchemy.ext.asyncio import AsyncEngine
+from typing import TYPE_CHECKING
 
 from spv_wallet.engine.models.base import Base
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncEngine
 
 
 async def run_auto_migrate(engine: AsyncEngine) -> None:

@@ -10,7 +10,6 @@ from spv_wallet.bsv.address import pubkey_to_address
 from spv_wallet.bsv.keys import ExtendedKey
 from spv_wallet.bsv.script import p2pkh_lock_script_from_pubkey
 from spv_wallet.engine.models.destination import Destination
-from spv_wallet.errors.definitions import ErrXPubNotFound
 from spv_wallet.errors.spv_errors import SPVError
 from spv_wallet.utils.crypto import sha256
 
@@ -164,9 +163,7 @@ class DestinationService:
         """
         async with self._engine.datastore.session() as session:
             result = await session.execute(
-                select(Destination).where(
-                    Destination.id == id_, Destination.deleted_at.is_(None)
-                )
+                select(Destination).where(Destination.id == id_, Destination.deleted_at.is_(None))
             )
             return result.scalar_one_or_none()
 
@@ -188,9 +185,7 @@ class DestinationService:
             )
             return result.scalar_one_or_none()
 
-    async def get_destinations_by_xpub(
-        self, xpub_id: str
-    ) -> list[Destination]:
+    async def get_destinations_by_xpub(self, xpub_id: str) -> list[Destination]:
         """Get all destinations for an xPub.
 
         Args:
@@ -201,9 +196,11 @@ class DestinationService:
         """
         async with self._engine.datastore.session() as session:
             result = await session.execute(
-                select(Destination).where(
+                select(Destination)
+                .where(
                     Destination.xpub_id == xpub_id,
                     Destination.deleted_at.is_(None),
-                ).order_by(Destination.chain, Destination.num)
+                )
+                .order_by(Destination.chain, Destination.num)
             )
             return list(result.scalars().all())

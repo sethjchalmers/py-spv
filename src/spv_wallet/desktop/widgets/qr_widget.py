@@ -32,18 +32,22 @@ class QRWidget(QLabel):
             self.setText("No QR data")
             return
         try:
-            import qrcode  # noqa: PLC0415
-            from qrcode.image.pil import PilImage  # noqa: PLC0415
+            import qrcode
+            from qrcode.image.pil import PilImage
 
             img = qrcode.make(data, image_factory=PilImage, box_size=8, border=2)
             # Convert PIL → QImage → QPixmap
             pil_img = img.get_image().convert("RGBA")
             raw = pil_img.tobytes("raw", "RGBA")
             qimg = QImage(
-                raw, pil_img.width, pil_img.height, QImage.Format.Format_RGBA8888,
+                raw,
+                pil_img.width,
+                pil_img.height,
+                QImage.Format.Format_RGBA8888,
             )
             pixmap = QPixmap.fromImage(qimg).scaled(
-                self._size, self._size,
+                self._size,
+                self._size,
                 Qt.AspectRatioMode.KeepAspectRatio,
                 Qt.TransformationMode.SmoothTransformation,
             )

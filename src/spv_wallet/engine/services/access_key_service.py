@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import select
@@ -85,9 +85,7 @@ class AccessKeyService:
         """
         async with self._engine.datastore.session() as session:
             result = await session.execute(
-                select(AccessKey).where(
-                    AccessKey.id == id_, AccessKey.deleted_at.is_(None)
-                )
+                select(AccessKey).where(AccessKey.id == id_, AccessKey.deleted_at.is_(None))
             )
             return result.scalar_one_or_none()
 
@@ -120,20 +118,16 @@ class AccessKeyService:
         """
         async with self._engine.datastore.session() as session:
             result = await session.execute(
-                select(AccessKey).where(
-                    AccessKey.id == id_, AccessKey.deleted_at.is_(None)
-                )
+                select(AccessKey).where(AccessKey.id == id_, AccessKey.deleted_at.is_(None))
             )
             key = result.scalar_one_or_none()
             if key is None:
                 raise ErrAccessKeyNotFound
 
-            key.deleted_at = datetime.now(timezone.utc)
+            key.deleted_at = datetime.now(UTC)
             await session.commit()
 
-    async def get_access_keys_by_xpub(
-        self, xpub_id: str
-    ) -> list[AccessKey]:
+    async def get_access_keys_by_xpub(self, xpub_id: str) -> list[AccessKey]:
         """List all active access keys for an xPub.
 
         Args:
@@ -144,10 +138,12 @@ class AccessKeyService:
         """
         async with self._engine.datastore.session() as session:
             result = await session.execute(
-                select(AccessKey).where(
+                select(AccessKey)
+                .where(
                     AccessKey.xpub_id == xpub_id,
                     AccessKey.deleted_at.is_(None),
-                ).order_by(AccessKey.created_at)
+                )
+                .order_by(AccessKey.created_at)
             )
             return list(result.scalars().all())
 

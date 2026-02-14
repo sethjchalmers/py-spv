@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import asyncio
 
-import pytest
-
 from spv_wallet.cache.memory import MemoryCache
 from spv_wallet.config.settings import CacheConfig, CacheEngine
 
@@ -13,7 +11,7 @@ from spv_wallet.config.settings import CacheConfig, CacheEngine
 class TestMemoryCache:
     """Test in-memory LRU cache with TTL."""
 
-    async def test_init(self) -> None:  # noqa: ASYNC910
+    async def test_init(self) -> None:
         """MemoryCache can be instantiated."""
         config = CacheConfig(engine=CacheEngine.MEMORY)
         cache = MemoryCache(config, max_size=100)

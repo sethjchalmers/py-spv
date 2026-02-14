@@ -9,14 +9,17 @@ Central datastore abstraction providing:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, AsyncIterator
+from typing import TYPE_CHECKING
 
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase
 
 from spv_wallet.datastore.engines import create_engine
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
+    from sqlalchemy.orm import DeclarativeBase
+
     from spv_wallet.config.settings import DatabaseConfig
 
 

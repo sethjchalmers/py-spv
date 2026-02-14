@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from spv_wallet.errors.spv_errors import SPVError
-from spv_wallet.errors.chain_errors import ARCError, BHSError
 from spv_wallet.errors import definitions as defs
-
+from spv_wallet.errors.chain_errors import ARCError, BHSError
+from spv_wallet.errors.spv_errors import SPVError
 
 # ---------------------------------------------------------------------------
 # SPVError base class

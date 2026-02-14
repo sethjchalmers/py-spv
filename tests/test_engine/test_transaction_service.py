@@ -2,24 +2,21 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock
-
 import pytest
 
 from spv_wallet.bsv.keys import ExtendedKey, xpub_id
-from spv_wallet.bsv.script import p2pkh_lock_script
 from spv_wallet.bsv.transaction import Transaction as BsvTransaction
-from spv_wallet.chain.arc.models import FeeUnit, TXInfo, TXStatus
+from spv_wallet.chain.arc.models import FeeUnit
 from spv_wallet.config.settings import AppConfig, DatabaseConfig, DatabaseEngine
 from spv_wallet.engine.client import SPVWalletEngine
 from spv_wallet.engine.services.transaction_service import (
-    ErrDraftCanceled,
-    ErrInvalidHex,
-    TransactionService,
     _DEFAULT_FEE_UNIT,
     _INPUT_SIZE,
     _OUTPUT_SIZE,
     _TX_OVERHEAD,
+    ErrDraftCanceled,
+    ErrInvalidHex,
+    TransactionService,
 )
 from spv_wallet.errors.definitions import (
     ErrDraftNotFound,
@@ -58,7 +55,11 @@ async def _seed_utxos(engine: SPVWalletEngine, count: int = 5, sats: int = 10000
     """Seed UTXOs for tests."""
     for i in range(count):
         await engine.utxo_service.new_utxo(
-            _XPUB_ID, _TX_ID, i, sats, _P2PKH_SCRIPT,
+            _XPUB_ID,
+            _TX_ID,
+            i,
+            sats,
+            _P2PKH_SCRIPT,
         )
 
 
@@ -245,7 +246,8 @@ class TestRecordTransaction:
         hex_body = bsv_tx.to_hex()
 
         tx = await engine.transaction_service.record_transaction(
-            _XPUB_ID, hex_body,
+            _XPUB_ID,
+            hex_body,
         )
         assert tx.id == bsv_tx.txid()
         assert tx.status == "created"
@@ -272,7 +274,9 @@ class TestRecordTransaction:
         hex_body = bsv_tx.to_hex()
 
         tx = await engine.transaction_service.record_transaction(
-            _XPUB_ID, hex_body, draft_id=draft.id,
+            _XPUB_ID,
+            hex_body,
+            draft_id=draft.id,
         )
         assert tx.id == bsv_tx.txid()
 
@@ -285,7 +289,8 @@ class TestRecordTransaction:
     async def test_record_invalid_hex(self, engine: SPVWalletEngine) -> None:
         with pytest.raises(type(ErrInvalidHex)):
             await engine.transaction_service.record_transaction(
-                _XPUB_ID, "not_valid_hex!!",
+                _XPUB_ID,
+                "not_valid_hex!!",
             )
 
     async def test_record_idempotent(self, engine: SPVWalletEngine) -> None:
@@ -313,7 +318,9 @@ class TestRecordTransaction:
 
         with pytest.raises(type(ErrDraftCanceled)):
             await engine.transaction_service.record_transaction(
-                _XPUB_ID, bsv_tx.to_hex(), draft_id=draft.id,
+                _XPUB_ID,
+                bsv_tx.to_hex(),
+                draft_id=draft.id,
             )
 
     async def test_record_with_metadata(self, engine: SPVWalletEngine) -> None:
@@ -322,7 +329,8 @@ class TestRecordTransaction:
         bsv_tx.add_output(1000, bytes.fromhex(_P2PKH_SCRIPT))
 
         tx = await engine.transaction_service.record_transaction(
-            _XPUB_ID, bsv_tx.to_hex(),
+            _XPUB_ID,
+            bsv_tx.to_hex(),
             metadata={"purpose": "test"},
         )
         assert tx.metadata_["purpose"] == "test"
@@ -339,14 +347,16 @@ class TestHandleARCCallback:
         bsv_tx.add_input(bytes.fromhex("cc" * 32), 0)
         bsv_tx.add_output(1000, bytes.fromhex(_P2PKH_SCRIPT))
         tx = await engine.transaction_service.record_transaction(
-            _XPUB_ID, bsv_tx.to_hex(),
+            _XPUB_ID,
+            bsv_tx.to_hex(),
         )
         return tx.id
 
     async def test_callback_seen_on_network(self, engine: SPVWalletEngine) -> None:
         txid = await self._create_tx(engine)
         tx = await engine.transaction_service.handle_arc_callback(
-            txid, "SEEN_ON_NETWORK",
+            txid,
+            "SEEN_ON_NETWORK",
         )
         assert tx is not None
         assert tx.status == "seen_on_network"
@@ -354,7 +364,8 @@ class TestHandleARCCallback:
     async def test_callback_mined(self, engine: SPVWalletEngine) -> None:
         txid = await self._create_tx(engine)
         tx = await engine.transaction_service.handle_arc_callback(
-            txid, "MINED",
+            txid,
+            "MINED",
             block_hash="block_hash_here",
             block_height=800000,
             merkle_path="merkle_data",
@@ -374,7 +385,8 @@ class TestHandleARCCallback:
     async def test_callback_rejected_with_competing(self, engine: SPVWalletEngine) -> None:
         txid = await self._create_tx(engine)
         tx = await engine.transaction_service.handle_arc_callback(
-            txid, "REJECTED",
+            txid,
+            "REJECTED",
             competing_txs=["tx1", "tx2"],
         )
         assert tx is not None
@@ -384,14 +396,16 @@ class TestHandleARCCallback:
     async def test_callback_broadcast(self, engine: SPVWalletEngine) -> None:
         txid = await self._create_tx(engine)
         tx = await engine.transaction_service.handle_arc_callback(
-            txid, "ACCEPTED_BY_NETWORK",
+            txid,
+            "ACCEPTED_BY_NETWORK",
         )
         assert tx is not None
         assert tx.status == "broadcast"
 
     async def test_callback_unknown_tx(self, engine: SPVWalletEngine) -> None:
         result = await engine.transaction_service.handle_arc_callback(
-            "nonexistent_txid", "MINED",
+            "nonexistent_txid",
+            "MINED",
         )
         assert result is None
 
@@ -415,7 +429,8 @@ class TestTransactionQueries:
             bsv_tx.add_input(bytes.fromhex(f"{i:064x}"), 0)
             bsv_tx.add_output(1000 * (i + 1), bytes.fromhex(_P2PKH_SCRIPT))
             tx = await engine.transaction_service.record_transaction(
-                _XPUB_ID, bsv_tx.to_hex(),
+                _XPUB_ID,
+                bsv_tx.to_hex(),
             )
             ids.append(tx.id)
         return ids
@@ -470,18 +485,21 @@ class TestUpdateTransactionStatus:
         bsv_tx.add_input(bytes.fromhex("dd" * 32), 0)
         bsv_tx.add_output(1000, bytes.fromhex(_P2PKH_SCRIPT))
         tx = await engine.transaction_service.record_transaction(
-            _XPUB_ID, bsv_tx.to_hex(),
+            _XPUB_ID,
+            bsv_tx.to_hex(),
         )
 
         updated = await engine.transaction_service.update_transaction_status(
-            tx.id, "mined",
+            tx.id,
+            "mined",
         )
         assert updated.status == "mined"
 
     async def test_update_status_not_found(self, engine: SPVWalletEngine) -> None:
         with pytest.raises(type(ErrTransactionNotFound)):
             await engine.transaction_service.update_transaction_status(
-                "nope", "mined",
+                "nope",
+                "mined",
             )
 
 

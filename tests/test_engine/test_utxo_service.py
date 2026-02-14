@@ -39,17 +39,17 @@ class TestNewUTXO:
         assert not utxo.is_spent
 
     async def test_create_idempotent(self, engine: SPVWalletEngine) -> None:
-        u1 = await engine.utxo_service.new_utxo(
-            _XPUB_ID, _TX_ID, 0, 50000, "script"
-        )
-        u2 = await engine.utxo_service.new_utxo(
-            _XPUB_ID, _TX_ID, 0, 50000, "script"
-        )
+        u1 = await engine.utxo_service.new_utxo(_XPUB_ID, _TX_ID, 0, 50000, "script")
+        u2 = await engine.utxo_service.new_utxo(_XPUB_ID, _TX_ID, 0, 50000, "script")
         assert u1.id == u2.id
 
     async def test_create_with_metadata(self, engine: SPVWalletEngine) -> None:
         utxo = await engine.utxo_service.new_utxo(
-            _XPUB_ID, _TX_ID, 0, 50000, "script",
+            _XPUB_ID,
+            _TX_ID,
+            0,
+            50000,
+            "script",
             metadata={"source": "mining"},
         )
         assert utxo.metadata_["source"] == "mining"
@@ -74,15 +74,11 @@ class TestGetUTXOs:
 
     async def _seed_utxos(self, engine: SPVWalletEngine) -> None:
         for i in range(3):
-            await engine.utxo_service.new_utxo(
-                _XPUB_ID, _TX_ID, i, 1000 * (i + 1), "script"
-            )
+            await engine.utxo_service.new_utxo(_XPUB_ID, _TX_ID, i, 1000 * (i + 1), "script")
         # Different xpub
         await engine.utxo_service.new_utxo("y" * 64, _TX_ID, 10, 9999, "s")
         # Spent UTXO
-        utxo = await engine.utxo_service.new_utxo(
-            _XPUB_ID, "b" * 64, 0, 500, "script"
-        )
+        utxo = await engine.utxo_service.new_utxo(_XPUB_ID, "b" * 64, 0, 500, "script")
         await engine.utxo_service.mark_spent(utxo.id, "c" * 64)
 
     async def test_get_all(self, engine: SPVWalletEngine) -> None:
@@ -97,9 +93,7 @@ class TestGetUTXOs:
 
     async def test_filter_unspent(self, engine: SPVWalletEngine) -> None:
         await self._seed_utxos(engine)
-        utxos = await engine.utxo_service.get_utxos(
-            xpub_id=_XPUB_ID, unspent_only=True
-        )
+        utxos = await engine.utxo_service.get_utxos(xpub_id=_XPUB_ID, unspent_only=True)
         assert len(utxos) == 3
         for u in utxos:
             assert not u.is_spent
@@ -111,9 +105,7 @@ class TestGetUTXOs:
 
     async def test_ordered_by_satoshis_desc(self, engine: SPVWalletEngine) -> None:
         await self._seed_utxos(engine)
-        utxos = await engine.utxo_service.get_utxos(
-            xpub_id=_XPUB_ID, unspent_only=True
-        )
+        utxos = await engine.utxo_service.get_utxos(xpub_id=_XPUB_ID, unspent_only=True)
         sats = [u.satoshis for u in utxos]
         assert sats == sorted(sats, reverse=True)
 
@@ -130,9 +122,7 @@ class TestCountUTXOs:
         for i in range(3):
             await engine.utxo_service.new_utxo(_XPUB_ID, _TX_ID, i, 1000, "s")
         await engine.utxo_service.mark_spent(f"{_TX_ID}:0", "spent_tx")
-        assert await engine.utxo_service.count_utxos(
-            xpub_id=_XPUB_ID, unspent_only=True
-        ) == 2
+        assert await engine.utxo_service.count_utxos(xpub_id=_XPUB_ID, unspent_only=True) == 2
 
 
 class TestMarkSpent:
@@ -154,9 +144,7 @@ class TestBalance:
 
     async def test_balance(self, engine: SPVWalletEngine) -> None:
         for i in range(3):
-            await engine.utxo_service.new_utxo(
-                _XPUB_ID, _TX_ID, i, 1000 * (i + 1), "s"
-            )
+            await engine.utxo_service.new_utxo(_XPUB_ID, _TX_ID, i, 1000 * (i + 1), "s")
         # 1000 + 2000 + 3000 = 6000
         balance = await engine.utxo_service.get_balance(_XPUB_ID)
         assert balance == 6000
@@ -178,18 +166,12 @@ class TestUnspentForDraft:
 
     async def test_select_utxos(self, engine: SPVWalletEngine) -> None:
         for i in range(5):
-            await engine.utxo_service.new_utxo(
-                _XPUB_ID, _TX_ID, i, 1000, "s"
-            )
-        selected = await engine.utxo_service.get_unspent_for_draft(
-            _XPUB_ID, required_sats=2500
-        )
+            await engine.utxo_service.new_utxo(_XPUB_ID, _TX_ID, i, 1000, "s")
+        selected = await engine.utxo_service.get_unspent_for_draft(_XPUB_ID, required_sats=2500)
         total = sum(u.satoshis for u in selected)
         assert total >= 2500
 
     async def test_insufficient_funds(self, engine: SPVWalletEngine) -> None:
         await engine.utxo_service.new_utxo(_XPUB_ID, _TX_ID, 0, 100, "s")
         with pytest.raises(type(ErrNotEnoughFunds)):
-            await engine.utxo_service.get_unspent_for_draft(
-                _XPUB_ID, required_sats=500
-            )
+            await engine.utxo_service.get_unspent_for_draft(_XPUB_ID, required_sats=500)

@@ -10,13 +10,12 @@ import enum
 from dataclasses import dataclass, field
 from typing import Any
 
-
 # ---------------------------------------------------------------------------
 # Transaction status enum
 # ---------------------------------------------------------------------------
 
 
-class TXStatus(str, enum.Enum):
+class TXStatus(enum.StrEnum):
     """ARC transaction status codes.
 
     Lifecycle: UNKNOWN → QUEUED → RECEIVED → STORED → ANNOUNCED_TO_NETWORK

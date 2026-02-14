@@ -5,11 +5,10 @@ from __future__ import annotations
 import httpx
 import pytest
 
-from spv_wallet.chain.bhs.models import ConfirmationState, MerkleRootVerification
+from spv_wallet.chain.bhs.models import MerkleRootVerification
 from spv_wallet.chain.bhs.service import BHSService
 from spv_wallet.config.settings import BHSConfig
 from spv_wallet.errors.chain_errors import BHSError
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -62,16 +61,21 @@ class TestBHSVerify:
     async def test_verify_confirmed(self):
         def handler(request: httpx.Request):
             assert "merkleroot/verify" in str(request.url)
-            return httpx.Response(200, json={
-                "confirmationState": "CONFIRMED",
-                "confirmations": [
-                    {"merkleRoot": "aabb", "blockHeight": 100, "confirmation": "CONFIRMED"}
-                ],
-            })
+            return httpx.Response(
+                200,
+                json={
+                    "confirmationState": "CONFIRMED",
+                    "confirmations": [
+                        {"merkleRoot": "aabb", "blockHeight": 100, "confirmation": "CONFIRMED"}
+                    ],
+                },
+            )
 
         bhs = BHSService(_bhs_config())
         await bhs.connect()
-        bhs._client = httpx.AsyncClient(transport=_mock_transport(handler), base_url="https://bhs.test.com")
+        bhs._client = httpx.AsyncClient(
+            transport=_mock_transport(handler), base_url="https://bhs.test.com"
+        )
 
         roots = [MerkleRootVerification(merkle_root="aabb", block_height=100)]
         result = await bhs.verify_merkle_roots(roots)
@@ -81,14 +85,19 @@ class TestBHSVerify:
 
     async def test_verify_invalid(self):
         def handler(request: httpx.Request):
-            return httpx.Response(200, json={
-                "confirmationState": "INVALID",
-                "confirmations": [],
-            })
+            return httpx.Response(
+                200,
+                json={
+                    "confirmationState": "INVALID",
+                    "confirmations": [],
+                },
+            )
 
         bhs = BHSService(_bhs_config())
         await bhs.connect()
-        bhs._client = httpx.AsyncClient(transport=_mock_transport(handler), base_url="https://bhs.test.com")
+        bhs._client = httpx.AsyncClient(
+            transport=_mock_transport(handler), base_url="https://bhs.test.com"
+        )
 
         roots = [MerkleRootVerification(merkle_root="bad", block_height=1)]
         result = await bhs.verify_merkle_roots(roots)
@@ -101,7 +110,9 @@ class TestBHSVerify:
 
         bhs = BHSService(_bhs_config())
         await bhs.connect()
-        bhs._client = httpx.AsyncClient(transport=_mock_transport(handler), base_url="https://bhs.test.com")
+        bhs._client = httpx.AsyncClient(
+            transport=_mock_transport(handler), base_url="https://bhs.test.com"
+        )
 
         with pytest.raises(BHSError, match="500"):
             await bhs.verify_merkle_roots([])
@@ -117,16 +128,21 @@ class TestBHSGetRoots:
     async def test_get_merkle_roots(self):
         def handler(request: httpx.Request):
             assert "page=0" in str(request.url)
-            return httpx.Response(200, json={
-                "content": [
-                    {"merkleRoot": "aaa", "blockHeight": 1, "confirmation": "CONFIRMED"},
-                ],
-                "page": {"number": 0, "totalPages": 5, "totalElements": 50},
-            })
+            return httpx.Response(
+                200,
+                json={
+                    "content": [
+                        {"merkleRoot": "aaa", "blockHeight": 1, "confirmation": "CONFIRMED"},
+                    ],
+                    "page": {"number": 0, "totalPages": 5, "totalElements": 50},
+                },
+            )
 
         bhs = BHSService(_bhs_config())
         await bhs.connect()
-        bhs._client = httpx.AsyncClient(transport=_mock_transport(handler), base_url="https://bhs.test.com")
+        bhs._client = httpx.AsyncClient(
+            transport=_mock_transport(handler), base_url="https://bhs.test.com"
+        )
 
         result = await bhs.get_merkle_roots(page=0, size=10)
         assert len(result.content) == 1
@@ -139,7 +155,9 @@ class TestBHSGetRoots:
 
         bhs = BHSService(_bhs_config())
         await bhs.connect()
-        bhs._client = httpx.AsyncClient(transport=_mock_transport(handler), base_url="https://bhs.test.com")
+        bhs._client = httpx.AsyncClient(
+            transport=_mock_transport(handler), base_url="https://bhs.test.com"
+        )
 
         with pytest.raises(BHSError, match="403"):
             await bhs.get_merkle_roots()
@@ -158,7 +176,9 @@ class TestBHSHealthcheck:
 
         bhs = BHSService(_bhs_config())
         await bhs.connect()
-        bhs._client = httpx.AsyncClient(transport=_mock_transport(handler), base_url="https://bhs.test.com")
+        bhs._client = httpx.AsyncClient(
+            transport=_mock_transport(handler), base_url="https://bhs.test.com"
+        )
 
         assert await bhs.healthcheck() is True
         await bhs.close()
@@ -169,7 +189,9 @@ class TestBHSHealthcheck:
 
         bhs = BHSService(_bhs_config())
         await bhs.connect()
-        bhs._client = httpx.AsyncClient(transport=_mock_transport(handler), base_url="https://bhs.test.com")
+        bhs._client = httpx.AsyncClient(
+            transport=_mock_transport(handler), base_url="https://bhs.test.com"
+        )
 
         assert await bhs.healthcheck() is False
         await bhs.close()
@@ -183,28 +205,38 @@ class TestBHSHealthcheck:
 class TestBHSIsValidRoot:
     async def test_valid_root(self):
         def handler(request: httpx.Request):
-            return httpx.Response(200, json={
-                "confirmationState": "CONFIRMED",
-                "confirmations": [],
-            })
+            return httpx.Response(
+                200,
+                json={
+                    "confirmationState": "CONFIRMED",
+                    "confirmations": [],
+                },
+            )
 
         bhs = BHSService(_bhs_config())
         await bhs.connect()
-        bhs._client = httpx.AsyncClient(transport=_mock_transport(handler), base_url="https://bhs.test.com")
+        bhs._client = httpx.AsyncClient(
+            transport=_mock_transport(handler), base_url="https://bhs.test.com"
+        )
 
         assert await bhs.is_valid_root("aabb", 100) is True
         await bhs.close()
 
     async def test_invalid_root(self):
         def handler(request: httpx.Request):
-            return httpx.Response(200, json={
-                "confirmationState": "INVALID",
-                "confirmations": [],
-            })
+            return httpx.Response(
+                200,
+                json={
+                    "confirmationState": "INVALID",
+                    "confirmations": [],
+                },
+            )
 
         bhs = BHSService(_bhs_config())
         await bhs.connect()
-        bhs._client = httpx.AsyncClient(transport=_mock_transport(handler), base_url="https://bhs.test.com")
+        bhs._client = httpx.AsyncClient(
+            transport=_mock_transport(handler), base_url="https://bhs.test.com"
+        )
 
         assert await bhs.is_valid_root("bad", 1) is False
         await bhs.close()

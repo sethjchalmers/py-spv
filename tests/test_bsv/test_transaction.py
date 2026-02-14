@@ -74,9 +74,7 @@ class TestTxInput:
         assert restored.sequence == inp.sequence
 
     def test_prev_tx_id_hex(self) -> None:
-        txid_internal = bytes.fromhex(
-            "abcd" * 16
-        )
+        txid_internal = bytes.fromhex("abcd" * 16)
         inp = TxInput(prev_tx_id=txid_internal, prev_tx_out_index=0)
         # Display hex should be reversed
         assert inp.prev_tx_id_hex == txid_internal[::-1].hex()

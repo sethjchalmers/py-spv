@@ -30,7 +30,9 @@ class DraftTransaction(Base, TimestampMixin, MetadataMixin, ModelOps):
         JSON, nullable=False, default=dict, comment="TransactionConfig JSON"
     )
     status: Mapped[str] = mapped_column(
-        String(32), nullable=False, default="draft",
+        String(32),
+        nullable=False,
+        default="draft",
         comment="draft | canceled | complete | expired",
     )
     expires_at: Mapped[str | None] = mapped_column(

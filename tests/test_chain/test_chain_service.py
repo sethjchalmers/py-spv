@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, PropertyMock, patch
+from unittest.mock import AsyncMock
 
-import pytest
-
-from spv_wallet.chain.arc.models import FeeUnit, TXInfo, TXStatus
+from spv_wallet.chain.arc.models import FeeUnit, TXInfo
 from spv_wallet.chain.bhs.models import (
     ConfirmationState,
     MerkleRootVerification,
@@ -15,10 +13,10 @@ from spv_wallet.chain.bhs.models import (
 from spv_wallet.chain.service import ChainService
 from spv_wallet.config.settings import AppConfig
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _config(**overrides) -> AppConfig:
     defaults: dict = {}

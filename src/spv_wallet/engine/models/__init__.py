@@ -29,6 +29,7 @@ ALL_MODELS: list[type[Base]] = [
 
 __all__ = [
     "ALL_MODELS",
+    "UTXO",
     "AccessKey",
     "Base",
     "Contact",
@@ -39,7 +40,6 @@ __all__ = [
     "PaymailAddress",
     "TimestampMixin",
     "Transaction",
-    "UTXO",
     "Webhook",
     "Xpub",
 ]

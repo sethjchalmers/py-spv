@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from PySide6.QtCore import Qt, Slot
 from PySide6.QtWidgets import (
     QApplication,
@@ -11,7 +13,6 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from spv_wallet.desktop.wallet_api import WalletAPI
 from spv_wallet.desktop.widgets.common import (
     Card,
     caption_label,
@@ -20,6 +21,9 @@ from spv_wallet.desktop.widgets.common import (
     subheading_label,
 )
 from spv_wallet.desktop.widgets.qr_widget import QRWidget
+
+if TYPE_CHECKING:
+    from spv_wallet.desktop.wallet_api import WalletAPI
 
 
 class ReceivePanel(QWidget):

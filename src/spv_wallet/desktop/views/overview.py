@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from PySide6.QtCore import Qt, Slot
 from PySide6.QtWidgets import (
@@ -14,7 +14,6 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from spv_wallet.desktop.wallet_api import WalletAPI
 from spv_wallet.desktop.widgets.common import (
     Card,
     Separator,
@@ -23,6 +22,9 @@ from spv_wallet.desktop.widgets.common import (
     heading_label,
     subheading_label,
 )
+
+if TYPE_CHECKING:
+    from spv_wallet.desktop.wallet_api import WalletAPI
 
 
 class OverviewPanel(QWidget):
@@ -67,7 +69,7 @@ class OverviewPanel(QWidget):
         self._tx_table.setMaximumHeight(200)
         self._tx_table.verticalHeader().setVisible(False)
         self._tx_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        from PySide6.QtWidgets import QHeaderView  # noqa: PLC0415
+        from PySide6.QtWidgets import QHeaderView
 
         self._tx_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         tx_card.layout().addWidget(self._tx_table)
@@ -109,7 +111,9 @@ class OverviewPanel(QWidget):
             self._tx_table.setItem(row, 0, QTableWidgetItem(tx.get("status", "")))
             self._tx_table.setItem(row, 1, QTableWidgetItem(tx.get("direction", "")))
             self._tx_table.setItem(
-                row, 2, QTableWidgetItem(f"{tx.get('total_value', 0):,}"),
+                row,
+                2,
+                QTableWidgetItem(f"{tx.get('total_value', 0):,}"),
             )
             self._tx_table.setItem(row, 3, QTableWidgetItem(tx.get("created_at", "")))
 

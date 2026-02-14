@@ -9,14 +9,13 @@ Implements the V1 transaction lifecycle:
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import select
 
-from spv_wallet.bsv.script import ScriptType, detect_script_type, op_return_script, push_data
+from spv_wallet.bsv.script import ScriptType, detect_script_type, op_return_script
 from spv_wallet.bsv.transaction import Transaction as BsvTransaction
-from spv_wallet.bsv.transaction import TxInput, TxOutput
+from spv_wallet.bsv.transaction import TxOutput
 from spv_wallet.chain.arc.models import FeeUnit, TXStatus
 from spv_wallet.engine.models.draft_transaction import DraftTransaction
 from spv_wallet.engine.models.transaction import Transaction
@@ -25,7 +24,6 @@ from spv_wallet.errors.definitions import (
     ErrDraftNotFound,
     ErrNotEnoughFunds,
     ErrTransactionNotFound,
-    ErrTransactionRejected,
 )
 from spv_wallet.errors.spv_errors import SPVError
 
@@ -33,12 +31,8 @@ if TYPE_CHECKING:
     from spv_wallet.engine.client import SPVWalletEngine
 
 # Error definitions specific to transaction service
-ErrInvalidHex = SPVError(
-    "invalid transaction hex", status_code=400, code="invalid-tx-hex"
-)
-ErrDraftExpired = SPVError(
-    "draft transaction has expired", status_code=422, code="draft-expired"
-)
+ErrInvalidHex = SPVError("invalid transaction hex", status_code=400, code="invalid-tx-hex")
+ErrDraftExpired = SPVError("draft transaction has expired", status_code=422, code="draft-expired")
 ErrDraftCanceled = SPVError(
     "draft transaction has been canceled", status_code=422, code="draft-canceled"
 )
@@ -140,14 +134,16 @@ class TransactionService:
                 prev_tx_id=bytes.fromhex(utxo.transaction_id)[::-1],
                 prev_tx_out_index=utxo.output_index,
             )
-            input_configs.append({
-                "utxo_id": utxo.id,
-                "transaction_id": utxo.transaction_id,
-                "output_index": utxo.output_index,
-                "satoshis": utxo.satoshis,
-                "script_pub_key": utxo.script_pub_key,
-                "destination_id": utxo.destination_id,
-            })
+            input_configs.append(
+                {
+                    "utxo_id": utxo.id,
+                    "transaction_id": utxo.transaction_id,
+                    "output_index": utxo.output_index,
+                    "satoshis": utxo.satoshis,
+                    "script_pub_key": utxo.script_pub_key,
+                    "destination_id": utxo.destination_id,
+                }
+            )
 
         # Add specified outputs
         output_configs: list[dict[str, Any]] = []
@@ -162,12 +158,14 @@ class TransactionService:
             change_dest = await self._create_change_destination(xpub_id)
             change_destination_id = change_dest.id
             bsv_tx.add_output(change, bytes.fromhex(change_dest.locking_script))
-            output_configs.append({
-                "to": change_dest.address,
-                "satoshis": change,
-                "change": True,
-                "destination_id": change_dest.id,
-            })
+            output_configs.append(
+                {
+                    "to": change_dest.address,
+                    "satoshis": change,
+                    "change": True,
+                    "destination_id": change_dest.id,
+                }
+            )
 
         # Build configuration JSON
         configuration: dict[str, Any] = {
@@ -195,9 +193,7 @@ class TransactionService:
         # Reserve UTXOs
         async with self._engine.datastore.session() as session:
             for utxo in selected_utxos:
-                result = await session.execute(
-                    select(UTXO).where(UTXO.id == utxo.id)
-                )
+                result = await session.execute(select(UTXO).where(UTXO.id == utxo.id))
                 db_utxo = result.scalar_one_or_none()
                 if db_utxo:
                     db_utxo.draft_id = draft_id
@@ -237,9 +233,7 @@ class TransactionService:
             for inp in config.get("inputs", []):
                 utxo_id = inp.get("utxo_id", "")
                 if utxo_id:
-                    utxo_result = await session.execute(
-                        select(UTXO).where(UTXO.id == utxo_id)
-                    )
+                    utxo_result = await session.execute(select(UTXO).where(UTXO.id == utxo_id))
                     utxo = utxo_result.scalar_one_or_none()
                     if utxo and utxo.draft_id == draft_id:
                         utxo.draft_id = ""
@@ -250,9 +244,7 @@ class TransactionService:
     # Transaction recording
     # ------------------------------------------------------------------
 
-    async def _mark_inputs_spent(
-        self, session: Any, bsv_tx: BsvTransaction, txid: str
-    ) -> None:
+    async def _mark_inputs_spent(self, session: Any, bsv_tx: BsvTransaction, txid: str) -> None:
         """Mark input UTXOs as spent by this transaction.
 
         Args:
@@ -291,9 +283,7 @@ class TransactionService:
             dest = await self._find_destination_by_script(script_hex)
             if dest is not None:
                 utxo_id = f"{txid}:{i}"
-                existing_utxo = await session.execute(
-                    select(UTXO).where(UTXO.id == utxo_id)
-                )
+                existing_utxo = await session.execute(select(UTXO).where(UTXO.id == utxo_id))
                 if existing_utxo.scalar_one_or_none() is None:
                     new_utxo = UTXO(
                         id=utxo_id,
@@ -435,9 +425,7 @@ class TransactionService:
         """
         async with self._engine.datastore.session() as session:
             result = await session.execute(
-                select(Transaction).where(
-                    Transaction.id == txid, Transaction.deleted_at.is_(None)
-                )
+                select(Transaction).where(Transaction.id == txid, Transaction.deleted_at.is_(None))
             )
             tx = result.scalar_one_or_none()
             if tx is None:
@@ -491,9 +479,7 @@ class TransactionService:
         """
         async with self._engine.datastore.session() as session:
             result = await session.execute(
-                select(Transaction).where(
-                    Transaction.id == txid, Transaction.deleted_at.is_(None)
-                )
+                select(Transaction).where(Transaction.id == txid, Transaction.deleted_at.is_(None))
             )
             return result.scalar_one_or_none()
 
@@ -543,9 +529,7 @@ class TransactionService:
             )
             return result.scalar_one_or_none()
 
-    async def update_transaction_status(
-        self, txid: str, status: str
-    ) -> Transaction:
+    async def update_transaction_status(self, txid: str, status: str) -> Transaction:
         """Update a transaction's status.
 
         Args:
@@ -560,9 +544,7 @@ class TransactionService:
         """
         async with self._engine.datastore.session() as session:
             result = await session.execute(
-                select(Transaction).where(
-                    Transaction.id == txid, Transaction.deleted_at.is_(None)
-                )
+                select(Transaction).where(Transaction.id == txid, Transaction.deleted_at.is_(None))
             )
             tx = result.scalar_one_or_none()
             if tx is None:
@@ -583,8 +565,8 @@ class TransactionService:
         if self._engine.chain_service is not None:
             try:
                 return await self._engine.chain_service.get_fee_unit()
-            except Exception:  # noqa: BLE001
-                pass
+            except Exception:  # noqa: S110
+                pass  # Fall back to default fee unit
         return _DEFAULT_FEE_UNIT
 
     def _estimate_fee(
@@ -604,9 +586,7 @@ class TransactionService:
         size = _TX_OVERHEAD + (input_count * _INPUT_SIZE) + (output_count * _OUTPUT_SIZE)
         return fee_unit.fee_for_size(size)
 
-    def _process_outputs(
-        self, outputs: list[dict[str, Any]]
-    ) -> tuple[list[TxOutput], int]:
+    def _process_outputs(self, outputs: list[dict[str, Any]]) -> tuple[list[TxOutput], int]:
         """Process output specifications into TxOutputs.
 
         Args:
@@ -716,9 +696,7 @@ class TransactionService:
             if draft.status == "canceled":
                 raise ErrDraftCanceled
             if draft.status == "complete":
-                raise SPVError(
-                    "draft already used", status_code=409, code="draft-already-used"
-                )
+                raise SPVError("draft already used", status_code=409, code="draft-already-used")
 
             return draft
 
@@ -745,5 +723,5 @@ class TransactionService:
                         if db_tx:
                             db_tx.status = "broadcast"
                             await session.commit()
-        except Exception:  # noqa: BLE001
+        except Exception:  # noqa: S110
             pass  # Broadcast failure doesn't fail recording

@@ -28,14 +28,14 @@ class MemoryCache:
         self._cache: OrderedDict[str, tuple[str, float | None]] = OrderedDict()
         # Format: {key: (value, expiry_timestamp_or_none)}
 
-    async def connect(self) -> None:  # noqa: ASYNC910
+    async def connect(self) -> None:
         """Connect (no-op for in-memory)."""
 
-    async def close(self) -> None:  # noqa: ASYNC910
+    async def close(self) -> None:
         """Close and clear the cache."""
         self._cache.clear()
 
-    async def get(self, key: str) -> str | None:  # noqa: ASYNC910
+    async def get(self, key: str) -> str | None:
         """Get a value from the cache.
 
         Args:
@@ -58,7 +58,7 @@ class MemoryCache:
         self._cache.move_to_end(key)
         return value
 
-    async def set(self, key: str, value: str, ttl: int | None = None) -> None:  # noqa: ASYNC910
+    async def set(self, key: str, value: str, ttl: int | None = None) -> None:
         """Set a value in the cache.
 
         Args:
@@ -79,7 +79,7 @@ class MemoryCache:
         if len(self._cache) > self._max_size:
             self._cache.popitem(last=False)  # Remove oldest (FIFO for LRU)
 
-    async def delete(self, key: str) -> None:  # noqa: ASYNC910
+    async def delete(self, key: str) -> None:
         """Delete a key from the cache.
 
         Args:
@@ -87,7 +87,7 @@ class MemoryCache:
         """
         self._cache.pop(key, None)
 
-    async def exists(self, key: str) -> bool:  # noqa: ASYNC910
+    async def exists(self, key: str) -> bool:
         """Check if a key exists and is not expired.
 
         Args:
@@ -108,7 +108,6 @@ class MemoryCache:
 
         return True
 
-    async def flush(self) -> None:  # noqa: ASYNC910
+    async def flush(self) -> None:
         """Clear all keys from the cache."""
         self._cache.clear()
-

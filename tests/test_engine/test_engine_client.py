@@ -6,7 +6,6 @@ import pytest
 
 from spv_wallet.config.settings import (
     AppConfig,
-    CacheConfig,
     DatabaseConfig,
     DatabaseEngine,
 )
@@ -16,7 +15,7 @@ from spv_wallet.engine.client import SPVWalletEngine
 class TestSPVWalletEngine:
     """Test engine initialization, lifecycle, and health checks."""
 
-    async def test_init(self) -> None:  # noqa: ASYNC910
+    async def test_init(self) -> None:
         """Engine can be instantiated with config."""
         config = AppConfig()
         engine = SPVWalletEngine(config)
@@ -61,7 +60,7 @@ class TestSPVWalletEngine:
         await engine.close()
         await engine.close()  # Should not raise
 
-    async def test_datastore_property_before_init(self) -> None:  # noqa: ASYNC910
+    async def test_datastore_property_before_init(self) -> None:
         """Accessing datastore before init raises RuntimeError."""
         config = AppConfig()
         engine = SPVWalletEngine(config)
@@ -69,7 +68,7 @@ class TestSPVWalletEngine:
         with pytest.raises(RuntimeError, match="not initialized"):
             _ = engine.datastore
 
-    async def test_cache_property_before_init(self) -> None:  # noqa: ASYNC910
+    async def test_cache_property_before_init(self) -> None:
         """Accessing cache before init raises RuntimeError."""
         config = AppConfig()
         engine = SPVWalletEngine(config)
@@ -85,7 +84,7 @@ class TestSPVWalletEngine:
         status = await engine.health_check()
         assert status["engine"] == "not_initialized"
 
-    async def test_transaction_service_before_init(self) -> None:  # noqa: ASYNC910
+    async def test_transaction_service_before_init(self) -> None:
         """Accessing transaction_service before init raises RuntimeError."""
         config = AppConfig()
         engine = SPVWalletEngine(config)
@@ -103,7 +102,7 @@ class TestSPVWalletEngine:
         assert engine.transaction_service is not None
         await engine.close()
 
-    async def test_chain_service_before_init(self) -> None:  # noqa: ASYNC910
+    async def test_chain_service_before_init(self) -> None:
         """chain_service is None before init."""
         config = AppConfig()
         engine = SPVWalletEngine(config)
@@ -130,6 +129,7 @@ class TestSPVWalletEngine:
         status = await engine.health_check()
         assert "chain" in status
         await engine.close()
+
     async def test_health_check_initialized(self) -> None:
         """Health check after init shows all ok."""
         config = AppConfig(

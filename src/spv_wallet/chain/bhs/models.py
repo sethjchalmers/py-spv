@@ -9,13 +9,12 @@ import enum
 from dataclasses import dataclass, field
 from typing import Any
 
-
 # ---------------------------------------------------------------------------
 # Confirmation state enum
 # ---------------------------------------------------------------------------
 
 
-class ConfirmationState(str, enum.Enum):
+class ConfirmationState(enum.StrEnum):
     """BHS Merkle root verification states."""
 
     CONFIRMED = "CONFIRMED"
@@ -138,9 +137,7 @@ class VerifyMerkleRootsResponse:
     def from_dict(cls, data: dict[str, Any]) -> VerifyMerkleRootsResponse:
         """Create from BHS JSON response."""
         state = data.get("confirmationState", data.get("confirmation_state", "UNABLE_TO_VERIFY"))
-        confirmations = [
-            MerkleRootConfirmation.from_dict(c) for c in data.get("confirmations", [])
-        ]
+        confirmations = [MerkleRootConfirmation.from_dict(c) for c in data.get("confirmations", [])]
         return cls(
             confirmation_state=ConfirmationState.from_string(state),
             confirmations=confirmations,

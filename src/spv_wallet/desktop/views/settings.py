@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from PySide6.QtCore import Slot
 from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
-from spv_wallet.desktop.wallet_api import WalletAPI
 from spv_wallet.desktop.widgets.common import Card, caption_label, heading_label, mono_label
+
+if TYPE_CHECKING:
+    from spv_wallet.desktop.wallet_api import WalletAPI
 
 
 class SettingsPanel(QWidget):

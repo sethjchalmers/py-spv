@@ -19,7 +19,6 @@ from spv_wallet.bsv.keys import (
 )
 from spv_wallet.utils.crypto import sha256
 
-
 # ---------------------------------------------------------------------------
 # BIP32 Test Vector 1 (from BIP32 spec)
 # Seed: 000102030405060708090a0b0c0d0e0f
@@ -80,18 +79,14 @@ class TestECDSA:
     """ECDSA signing and verification."""
 
     def test_sign_and_verify(self) -> None:
-        privkey = bytes.fromhex(
-            "e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35"
-        )
+        privkey = bytes.fromhex("e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35")
         msg_hash = sha256(b"test message")
         sig = sign_message(privkey, msg_hash)
         pubkey = private_key_to_public_key(privkey, compressed=True)
         assert verify_signature(pubkey, msg_hash, sig)
 
     def test_verify_wrong_message(self) -> None:
-        privkey = bytes.fromhex(
-            "e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35"
-        )
+        privkey = bytes.fromhex("e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35")
         msg_hash = sha256(b"test message")
         sig = sign_message(privkey, msg_hash)
         wrong_hash = sha256(b"wrong message")
@@ -99,21 +94,15 @@ class TestECDSA:
         assert not verify_signature(pubkey, wrong_hash, sig)
 
     def test_verify_wrong_key(self) -> None:
-        privkey1 = bytes.fromhex(
-            "e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35"
-        )
-        privkey2 = bytes.fromhex(
-            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-        )
+        privkey1 = bytes.fromhex("e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35")
+        privkey2 = bytes.fromhex("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
         msg_hash = sha256(b"test")
         sig = sign_message(privkey1, msg_hash)
         wrong_pubkey = private_key_to_public_key(privkey2)
         assert not verify_signature(wrong_pubkey, msg_hash, sig)
 
     def test_uncompressed_verify(self) -> None:
-        privkey = bytes.fromhex(
-            "e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35"
-        )
+        privkey = bytes.fromhex("e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35")
         msg_hash = sha256(b"test")
         sig = sign_message(privkey, msg_hash)
         pubkey = private_key_to_public_key(privkey, compressed=False)
@@ -125,25 +114,19 @@ class TestPublicKeyCompression:
     """Compressed / uncompressed public key encoding."""
 
     def test_compress_from_uncompressed(self) -> None:
-        privkey = bytes.fromhex(
-            "e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35"
-        )
+        privkey = bytes.fromhex("e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35")
         uncompressed = private_key_to_public_key(privkey, compressed=False)
         compressed = compress_public_key(uncompressed)
         expected = private_key_to_public_key(privkey, compressed=True)
         assert compressed == expected
 
     def test_compress_already_compressed(self) -> None:
-        privkey = bytes.fromhex(
-            "e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35"
-        )
+        privkey = bytes.fromhex("e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35")
         compressed = private_key_to_public_key(privkey, compressed=True)
         assert compress_public_key(compressed) == compressed
 
     def test_decompress_roundtrip(self) -> None:
-        privkey = bytes.fromhex(
-            "e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35"
-        )
+        privkey = bytes.fromhex("e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35")
         compressed = private_key_to_public_key(privkey)
         decompressed = decompress_public_key(compressed)
         recompressed = compress_public_key(decompressed)

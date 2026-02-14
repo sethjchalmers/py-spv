@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from datetime import UTC
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import select
@@ -105,9 +106,7 @@ class XPubService:
         xpub_hash = xpub_id(raw_xpub)
         return await self.get_xpub_by_id(xpub_hash, required=True)  # type: ignore[return-value]
 
-    async def get_xpub_by_id(
-        self, id_: str, *, required: bool = False
-    ) -> Xpub | None:
+    async def get_xpub_by_id(self, id_: str, *, required: bool = False) -> Xpub | None:
         """Look up an xPub by its hashed ID.
 
         Args:
@@ -138,9 +137,7 @@ class XPubService:
 
         return xpub
 
-    async def update_metadata(
-        self, id_: str, metadata: dict[str, Any]
-    ) -> Xpub:
+    async def update_metadata(self, id_: str, metadata: dict[str, Any]) -> Xpub:
         """Merge metadata onto an existing xPub.
 
         Args:
@@ -176,7 +173,7 @@ class XPubService:
         Args:
             id_: The xPubID.
         """
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         async with self._engine.datastore.session() as session:
             result = await session.execute(
@@ -186,15 +183,13 @@ class XPubService:
             if xpub is None:
                 raise ErrXPubNotFound
 
-            xpub.deleted_at = datetime.now(timezone.utc)
+            xpub.deleted_at = datetime.now(UTC)
             await session.commit()
 
         # Invalidate cache
         await self._invalidate_cache(id_)
 
-    async def increment_chain(
-        self, id_: str, *, chain: int, count: int = 1
-    ) -> int:
+    async def increment_chain(self, id_: str, *, chain: int, count: int = 1) -> int:
         """Increment the next derivation number for a chain and return the starting index.
 
         Args:
@@ -259,4 +254,3 @@ class XPubService:
             next_internal_num=data["next_internal_num"],
             next_external_num=data["next_external_num"],
         )
-
