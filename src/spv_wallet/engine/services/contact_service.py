@@ -138,9 +138,7 @@ class ContactService:
         if existing is not None:
             # Update existing
             async with self._engine.datastore.session() as session:
-                result = await session.execute(
-                    select(Contact).where(Contact.id == existing.id)
-                )
+                result = await session.execute(select(Contact).where(Contact.id == existing.id))
                 contact = result.scalar_one()
                 if full_name:
                     contact.full_name = full_name
@@ -159,9 +157,7 @@ class ContactService:
             status=status,
         )
 
-    async def update_status(
-        self, contact_id: str, new_status: str
-    ) -> Contact:
+    async def update_status(self, contact_id: str, new_status: str) -> Contact:
         """Transition a contact's status.
 
         Enforces valid status transitions:
@@ -184,9 +180,7 @@ class ContactService:
             raise ErrContactInvalidStatus
 
         async with self._engine.datastore.session() as session:
-            result = await session.execute(
-                select(Contact).where(Contact.id == contact_id)
-            )
+            result = await session.execute(select(Contact).where(Contact.id == contact_id))
             contact = result.scalar_one_or_none()
             if contact is None:
                 raise ErrContactNotFound
@@ -210,9 +204,7 @@ class ContactService:
             SPVError: If not found.
         """
         async with self._engine.datastore.session() as session:
-            result = await session.execute(
-                delete(Contact).where(Contact.id == contact_id)
-            )
+            result = await session.execute(delete(Contact).where(Contact.id == contact_id))
             await session.commit()
 
         if result.rowcount == 0:  # type: ignore[union-attr]
@@ -228,14 +220,10 @@ class ContactService:
             The Contact, or None if not found.
         """
         async with self._engine.datastore.session() as session:
-            result = await session.execute(
-                select(Contact).where(Contact.id == contact_id)
-            )
+            result = await session.execute(select(Contact).where(Contact.id == contact_id))
             return result.scalar_one_or_none()
 
-    async def get_contact_by_paymail(
-        self, xpub_id: str, paymail: str
-    ) -> Contact | None:
+    async def get_contact_by_paymail(self, xpub_id: str, paymail: str) -> Contact | None:
         """Look up a contact by owning xPub and paymail.
 
         Args:

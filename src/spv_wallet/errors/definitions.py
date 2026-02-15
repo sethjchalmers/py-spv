@@ -71,9 +71,7 @@ ErrPaymailP2PSendFailed = SPVError(
 
 # -- Contact ---------------------------------------------------------------
 
-ErrContactDuplicate = SPVError(
-    "contact already exists", status_code=409, code="contact-duplicate"
-)
+ErrContactDuplicate = SPVError("contact already exists", status_code=409, code="contact-duplicate")
 ErrContactInvalidStatus = SPVError(
     "invalid contact status transition", status_code=400, code="contact-invalid-status"
 )

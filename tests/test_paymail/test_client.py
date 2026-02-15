@@ -243,9 +243,7 @@ class TestP2PDestinations:
     async def test_destinations_no_capability(self):
         def no_p2p_handler(request: httpx.Request) -> httpx.Response:
             if request.url.path == "/.well-known/bsvalias":
-                return httpx.Response(
-                    200, json={"bsvalias": "1.0", "capabilities": {}}
-                )
+                return httpx.Response(200, json={"bsvalias": "1.0", "capabilities": {}})
             return httpx.Response(404)
 
         client = await _create_client_with_transport(no_p2p_handler)
@@ -285,9 +283,7 @@ class TestP2PSend:
     async def test_send_no_capability(self):
         def no_send_handler(request: httpx.Request) -> httpx.Response:
             if request.url.path == "/.well-known/bsvalias":
-                return httpx.Response(
-                    200, json={"bsvalias": "1.0", "capabilities": {}}
-                )
+                return httpx.Response(200, json={"bsvalias": "1.0", "capabilities": {}})
             return httpx.Response(404)
 
         client = await _create_client_with_transport(no_send_handler)

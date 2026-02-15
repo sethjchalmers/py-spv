@@ -132,9 +132,7 @@ class PaymailService:
             )
             return result.scalar_one_or_none()
 
-    async def get_paymail_by_alias(
-        self, alias: str, domain: str
-    ) -> PaymailAddress | None:
+    async def get_paymail_by_alias(self, alias: str, domain: str) -> PaymailAddress | None:
         """Look up a paymail address by alias and domain.
 
         Args:

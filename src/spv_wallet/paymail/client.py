@@ -110,9 +110,7 @@ class PaymailClient:
         """
         try:
             loop = asyncio.get_running_loop()
-            host, port = await loop.run_in_executor(
-                None, self._srv_lookup_sync, domain
-            )
+            host, port = await loop.run_in_executor(None, self._srv_lookup_sync, domain)
             return host, port
         except Exception:
             logger.debug("SRV lookup failed for %s, using default", domain)
@@ -306,9 +304,7 @@ class PaymailClient:
         return self._client
 
     @staticmethod
-    def _resolve_url_template(
-        template: str, paymail: SanitizedPaymail
-    ) -> str:
+    def _resolve_url_template(template: str, paymail: SanitizedPaymail) -> str:
         """Replace ``{alias}`` and ``{domain.tld}`` placeholders in URL templates.
 
         Args:

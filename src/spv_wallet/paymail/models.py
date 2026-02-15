@@ -16,9 +16,7 @@ import re
 from dataclasses import dataclass, field
 
 # RFC 5322 simplified regex for paymail validation
-_PAYMAIL_REGEX = re.compile(
-    r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$"
-)
+_PAYMAIL_REGEX = re.compile(r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$")
 
 # Well-known BRFC capability IDs
 BRFC_PKI = "pki"

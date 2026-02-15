@@ -57,17 +57,17 @@ def _mock_engine(*, domains: list[str] | None = None):
             result = MagicMock()
 
             # Check if this is a delete statement
-            if hasattr(stmt, 'is_delete') and stmt.is_delete:
+            if hasattr(stmt, "is_delete") and stmt.is_delete:
                 # Find matching records
                 deleted = 0
                 for key in list(storage.keys()):
                     clauses = (
                         stmt.whereclause.clauses
-                        if hasattr(stmt.whereclause, 'clauses')
+                        if hasattr(stmt.whereclause, "clauses")
                         else [stmt.whereclause]
                     )
                     for clause in clauses:
-                        if hasattr(clause, 'right') and storage[key].id == clause.right.value:
+                        if hasattr(clause, "right") and storage[key].id == clause.right.value:
                             del storage[key]
                             deleted += 1
                 result.rowcount = deleted
@@ -78,9 +78,7 @@ def _mock_engine(*, domains: list[str] | None = None):
 
             # Apply simple filtering based on whereclause
             # (simplified mock — real tests would use SQLite)
-            result.scalar_one_or_none = MagicMock(
-                return_value=matches[0] if matches else None
-            )
+            result.scalar_one_or_none = MagicMock(return_value=matches[0] if matches else None)
             result.scalars = MagicMock()
             result.scalars.return_value.all = MagicMock(return_value=matches)
             return result
@@ -98,9 +96,7 @@ class TestCreatePaymail:
     async def test_create_success(self):
         engine, _storage = _mock_engine()
         svc = PaymailService(engine)
-        pm = await svc.create_paymail(
-            "xpub123", "alice@example.com", public_name="Alice"
-        )
+        pm = await svc.create_paymail("xpub123", "alice@example.com", public_name="Alice")
         assert pm.alias == "alice"
         assert pm.domain == "example.com"
         assert pm.public_name == "Alice"
@@ -124,9 +120,7 @@ class TestCreatePaymail:
     async def test_create_with_metadata(self):
         engine, _ = _mock_engine()
         svc = PaymailService(engine)
-        pm = await svc.create_paymail(
-            "xpub123", "bob@test.com", metadata={"tag": "primary"}
-        )
+        pm = await svc.create_paymail("xpub123", "bob@test.com", metadata={"tag": "primary"})
         assert pm.metadata_ == {"tag": "primary"}
 
     async def test_create_invalid_format(self):

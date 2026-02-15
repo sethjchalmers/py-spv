@@ -56,7 +56,7 @@ def _mock_engine():
             result = MagicMock()
 
             # For delete — check rowcount
-            if hasattr(stmt, 'is_delete') and stmt.is_delete:
+            if hasattr(stmt, "is_delete") and stmt.is_delete:
                 deleted = 0
                 # Simple match by ID from whereclause
                 for key in list(storage.keys()):
@@ -70,12 +70,8 @@ def _mock_engine():
             matches = list(storage.values())
 
             # Return first match or None
-            result.scalar_one_or_none = MagicMock(
-                return_value=matches[0] if matches else None
-            )
-            result.scalar_one = MagicMock(
-                return_value=matches[0] if matches else None
-            )
+            result.scalar_one_or_none = MagicMock(return_value=matches[0] if matches else None)
+            result.scalar_one = MagicMock(return_value=matches[0] if matches else None)
             result.scalars = MagicMock()
             result.scalars.return_value.all = MagicMock(return_value=matches)
             return result
@@ -108,9 +104,7 @@ class TestCreateContact:
     async def test_create_with_status(self):
         engine, _ = _mock_engine()
         svc = ContactService(engine)
-        contact = await svc.create_contact(
-            "xpub1", "bob@test.com", status=CONTACT_STATUS_AWAITING
-        )
+        contact = await svc.create_contact("xpub1", "bob@test.com", status=CONTACT_STATUS_AWAITING)
         assert contact.status == CONTACT_STATUS_AWAITING
 
     async def test_create_with_metadata(self):
@@ -161,9 +155,7 @@ class TestStatusTransitions:
     async def test_awaiting_to_confirmed(self):
         engine, _ = _mock_engine()
         svc = ContactService(engine)
-        contact = await svc.create_contact(
-            "xpub1", "user@test.com", status=CONTACT_STATUS_AWAITING
-        )
+        contact = await svc.create_contact("xpub1", "user@test.com", status=CONTACT_STATUS_AWAITING)
         updated = await svc.update_status(contact.id, CONTACT_STATUS_CONFIRMED)
         assert updated.status == CONTACT_STATUS_CONFIRMED
 
@@ -180,9 +172,7 @@ class TestStatusTransitions:
     async def test_invalid_transition_rejected_terminal(self):
         engine, _ = _mock_engine()
         svc = ContactService(engine)
-        contact = await svc.create_contact(
-            "xpub1", "user@test.com", status=CONTACT_STATUS_REJECTED
-        )
+        contact = await svc.create_contact("xpub1", "user@test.com", status=CONTACT_STATUS_REJECTED)
         with pytest.raises(type(ErrContactInvalidStatus)):
             await svc.update_status(contact.id, CONTACT_STATUS_CONFIRMED)
 
@@ -209,9 +199,7 @@ class TestUpsertContact:
     async def test_upsert_creates_new(self):
         engine, _storage = _mock_engine()
         svc = ContactService(engine)
-        contact = await svc.upsert_contact(
-            "xpub1", "new@test.com", full_name="New User"
-        )
+        contact = await svc.upsert_contact("xpub1", "new@test.com", full_name="New User")
         assert contact.paymail == "new@test.com"
         assert contact.full_name == "New User"
 
@@ -223,9 +211,7 @@ class TestUpsertContact:
         await svc.create_contact("xpub1", "user@test.com", full_name="Old")
 
         # Upsert should update
-        contact = await svc.upsert_contact(
-            "xpub1", "user@test.com", full_name="Updated"
-        )
+        contact = await svc.upsert_contact("xpub1", "user@test.com", full_name="Updated")
         assert contact.full_name == "Updated"
 
 
@@ -252,9 +238,7 @@ class TestContactSearch:
     async def test_search_by_status(self):
         engine, _ = _mock_engine()
         svc = ContactService(engine)
-        await svc.create_contact(
-            "xpub1", "user@test.com", status=CONTACT_STATUS_CONFIRMED
-        )
+        await svc.create_contact("xpub1", "user@test.com", status=CONTACT_STATUS_CONFIRMED)
         results = await svc.search_contacts(status=CONTACT_STATUS_CONFIRMED)
         assert len(results) >= 1
 

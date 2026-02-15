@@ -75,28 +75,14 @@ async def capabilities(request: Request) -> dict:
         "bsvalias": "1.0",
         "capabilities": {
             BRFC_PKI: f"{base_url}/v1/bsvalias/id/{at}",
-            BRFC_SENDER_VALIDATION: (
-                f"{base_url}/v1/bsvalias/sender-validation/{at}"
-            ),
-            BRFC_VERIFY_PUBLIC_KEY: (
-                f"{base_url}/v1/bsvalias/verify-pubkey/{pk}"
-            ),
-            BRFC_PUBLIC_PROFILE: (
-                f"{base_url}/v1/bsvalias/public-profile/{at}"
-            ),
-            BRFC_P2P_PAYMENT_DESTINATION: (
-                f"{base_url}/v1/bsvalias/p2p-payment-destination/{at}"
-            ),
-            BRFC_P2P_SEND_TRANSACTION: (
-                f"{base_url}/v1/bsvalias/receive-transaction/{at}"
-            ),
+            BRFC_SENDER_VALIDATION: (f"{base_url}/v1/bsvalias/sender-validation/{at}"),
+            BRFC_VERIFY_PUBLIC_KEY: (f"{base_url}/v1/bsvalias/verify-pubkey/{pk}"),
+            BRFC_PUBLIC_PROFILE: (f"{base_url}/v1/bsvalias/public-profile/{at}"),
+            BRFC_P2P_PAYMENT_DESTINATION: (f"{base_url}/v1/bsvalias/p2p-payment-destination/{at}"),
+            BRFC_P2P_SEND_TRANSACTION: (f"{base_url}/v1/bsvalias/receive-transaction/{at}"),
             BRFC_BEEF: f"{base_url}/v1/bsvalias/beef/{at}",
-            BRFC_PIKE_INVITE: (
-                f"{base_url}/v1/bsvalias/pike/invite/{at}"
-            ),
-            BRFC_PIKE_OUTPUTS: (
-                f"{base_url}/v1/bsvalias/pike/outputs/{at}"
-            ),
+            BRFC_PIKE_INVITE: (f"{base_url}/v1/bsvalias/pike/invite/{at}"),
+            BRFC_PIKE_OUTPUTS: (f"{base_url}/v1/bsvalias/pike/outputs/{at}"),
         },
     }
 
@@ -148,9 +134,7 @@ async def p2p_destination(
     """
     provider = _get_provider(request)
     try:
-        return await provider.create_p2p_destination_response(
-            alias, domain, body.satoshis
-        )
+        return await provider.create_p2p_destination_response(alias, domain, body.satoshis)
     except SPVError as exc:
         raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
 

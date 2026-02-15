@@ -33,9 +33,7 @@ class PaymailServiceProvider:
     def __init__(self, engine: SPVWalletEngine) -> None:
         self._engine = engine
 
-    async def get_paymail_by_alias(
-        self, alias: str, domain: str
-    ) -> PaymailAddress:
+    async def get_paymail_by_alias(self, alias: str, domain: str) -> PaymailAddress:
         """Resolve a paymail alias@domain to a PaymailAddress record.
 
         Args:
@@ -76,9 +74,7 @@ class PaymailServiceProvider:
         paymail = await self.get_paymail_by_alias(alias, domain)
 
         # Verify the xPub exists and retrieve the raw key
-        xpub = await self._engine.xpub_service.get_xpub_by_id(
-            paymail.xpub_id, required=True
-        )
+        xpub = await self._engine.xpub_service.get_xpub_by_id(paymail.xpub_id, required=True)
 
         # Derive a new destination — raw xPub string stored in metadata
         raw_xpub = ""
@@ -122,9 +118,7 @@ class PaymailServiceProvider:
         paymail = await self.get_paymail_by_alias(alias, domain)
 
         # Get raw xPub from metadata to derive a fresh destination
-        xpub = await self._engine.xpub_service.get_xpub_by_id(
-            paymail.xpub_id, required=True
-        )
+        xpub = await self._engine.xpub_service.get_xpub_by_id(paymail.xpub_id, required=True)
         raw_xpub = ""
         if xpub and xpub.metadata_:
             raw_xpub = xpub.metadata_.get("raw_xpub", "")

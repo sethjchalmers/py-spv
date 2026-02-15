@@ -208,9 +208,7 @@ class TestPikeContactServiceSendInvite:
         engine.paymail_service.get_paymail_by_alias = AsyncMock(return_value=None)
         svc = PikeContactService(engine)
         with pytest.raises(type(ErrPaymailNotFound)):
-            await svc.send_invite(
-                "nobody", "example.com", "target@remote.com"
-            )
+            await svc.send_invite("nobody", "example.com", "target@remote.com")
 
 
 # ---------------------------------------------------------------------------

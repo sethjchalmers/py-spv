@@ -92,16 +92,12 @@ class TestCapabilities:
         assert caps.has_p2p is False
 
     def test_get_url(self):
-        caps = Capabilities(
-            capabilities={BRFC_PKI: "https://x.com/pki/{alias}@{domain.tld}"}
-        )
+        caps = Capabilities(capabilities={BRFC_PKI: "https://x.com/pki/{alias}@{domain.tld}"})
         assert caps.get_url(BRFC_PKI) == "https://x.com/pki/{alias}@{domain.tld}"
         assert caps.get_url("nonexistent") is None
 
     def test_has_p2p(self):
-        caps = Capabilities(
-            capabilities={BRFC_P2P_PAYMENT_DESTINATION: "url"}
-        )
+        caps = Capabilities(capabilities={BRFC_P2P_PAYMENT_DESTINATION: "url"})
         assert caps.has_p2p is True
 
     def test_has_pike(self):
