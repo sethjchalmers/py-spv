@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from spv_wallet.engine.services.transaction_service import TransactionService
     from spv_wallet.engine.services.utxo_service import UTXOService
     from spv_wallet.engine.services.xpub_service import XPubService
+    from spv_wallet.engine.v2.engine import V2Engine
     from spv_wallet.paymail.client import PaymailClient
 
 # Error messages
@@ -52,6 +53,7 @@ class SPVWalletEngine:
         self._paymail_service: PaymailService | None = None
         self._contact_service: ContactService | None = None
         self._paymail_client: PaymailClient | None = None
+        self._v2: V2Engine | None = None
 
     async def initialize(self) -> None:
         """Initialize datastore, run migrations, and start services.
@@ -113,6 +115,12 @@ class SPVWalletEngine:
             # Chain service is optional — engine works without it
             self._chain = None
 
+        # Initialize V2 engine
+        from spv_wallet.engine.v2.engine import V2Engine
+
+        self._v2 = V2Engine(self)
+        self._v2.initialize()
+
         # TODO Phase 7: Initialize task manager
 
         self._initialized = True
@@ -133,6 +141,11 @@ class SPVWalletEngine:
         self._access_key_service = None
         self._paymail_service = None
         self._contact_service = None
+
+        # Close V2 engine
+        if self._v2 is not None:
+            self._v2.close()
+            self._v2 = None
 
         # Close paymail client
         if self._paymail_client is not None:
@@ -259,6 +272,13 @@ class SPVWalletEngine:
         Returns None if chain service is not available (optional dependency).
         """
         return self._chain
+
+    @property
+    def v2(self) -> V2Engine:
+        """Get the V2 engine."""
+        if self._v2 is None:
+            raise RuntimeError(_ERR_NOT_INITIALIZED)
+        return self._v2
 
     async def health_check(self) -> dict[str, str]:
         """Check health status of all engine components.

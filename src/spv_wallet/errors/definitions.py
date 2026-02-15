@@ -75,3 +75,32 @@ ErrContactDuplicate = SPVError("contact already exists", status_code=409, code="
 ErrContactInvalidStatus = SPVError(
     "invalid contact status transition", status_code=400, code="contact-invalid-status"
 )
+
+# -- V2 User ---------------------------------------------------------------
+
+ErrUserNotFound = SPVError("user not found", status_code=404, code="user-not-found")
+ErrUserAlreadyExists = SPVError("user already exists", status_code=409, code="user-already-exists")
+ErrInvalidPubKey = SPVError("invalid public key", status_code=400, code="invalid-pubkey")
+ErrMissingFieldPubKey = SPVError(
+    "missing required field: public key", status_code=400, code="missing-pubkey"
+)
+
+# -- V2 Address ------------------------------------------------------------
+
+ErrAddressNotFound = SPVError("address not found", status_code=404, code="address-not-found")
+
+# -- V2 Transaction --------------------------------------------------------
+
+ErrOutlineInvalid = SPVError(
+    "transaction outline is invalid", status_code=400, code="outline-invalid"
+)
+ErrOutlineNoOutputs = SPVError(
+    "transaction outline has no outputs", status_code=400, code="outline-no-outputs"
+)
+ErrRecordTxInvalid = SPVError(
+    "recorded transaction is invalid", status_code=400, code="record-tx-invalid"
+)
+
+# -- V2 Operation ----------------------------------------------------------
+
+ErrOperationNotFound = SPVError("operation not found", status_code=404, code="operation-not-found")

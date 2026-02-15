@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse
 from spv_wallet import __version__
 from spv_wallet.api.middleware.cors import setup_cors
 from spv_wallet.api.v1 import v1_router
+from spv_wallet.api.v2 import v2_router
 from spv_wallet.config.settings import AppConfig
 from spv_wallet.engine.client import SPVWalletEngine
 from spv_wallet.errors.spv_errors import SPVError
@@ -80,5 +81,8 @@ def create_app(*, config: AppConfig | None = None) -> FastAPI:
 
     # -- Mount v1 API --
     app.include_router(v1_router)
+
+    # -- Mount v2 API --
+    app.include_router(v2_router)
 
     return app
