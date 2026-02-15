@@ -60,7 +60,7 @@ class _SeedDisplay(QTextEdit):
                         f"</td>"
                     )
             rows.append(f"<tr>{cells}</tr>")
-        self.setHtml(f'<table style="font-size:16px;">{"" .join(rows)}</table>')
+        self.setHtml(f'<table style="font-size:16px;">{"".join(rows)}</table>')
 
     def keyPressEvent(self, event) -> None:  # type: ignore[override]
         """Intercept Ctrl+C / Cmd+C to copy only seed words."""
@@ -86,6 +86,7 @@ class _SeedDisplay(QTextEdit):
         clipboard = QApplication.clipboard()
         if clipboard is not None:
             clipboard.setText(self._raw_words)
+
 
 # Page IDs for non-linear navigation
 _PAGE_MODE = 0
