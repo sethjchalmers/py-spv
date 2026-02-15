@@ -172,6 +172,32 @@ class TaskConfig(BaseSettings):
     job_timeout: int = 300
 
 
+class ClusterConfig(BaseSettings):
+    """Cluster coordination settings for multi-instance deployments."""
+
+    model_config = SettingsConfigDict(
+        env_prefix="SPVWALLET_CLUSTER__",
+        case_sensitive=False,
+    )
+
+    coordinator: str = "memory"  # "memory" or "redis"
+    redis_url: str = "redis://localhost:6379/2"
+    prefix: str = "bsv_"
+
+
+class NotificationConfig(BaseSettings):
+    """Notification / webhook settings."""
+
+    model_config = SettingsConfigDict(
+        env_prefix="SPVWALLET_NOTIFICATIONS__",
+        case_sensitive=False,
+    )
+
+    enabled: bool = True
+    webhook_max_retries: int = 2
+    webhook_ban_time: int = 3600  # seconds
+
+
 # ---------------------------------------------------------------------------
 # Top-level config
 # ---------------------------------------------------------------------------
@@ -217,6 +243,8 @@ class AppConfig(BaseSettings):
     paymail: PaymailConfig = Field(default_factory=PaymailConfig)
     metrics: MetricsConfig = Field(default_factory=MetricsConfig)
     task: TaskConfig = Field(default_factory=TaskConfig)
+    cluster: ClusterConfig = Field(default_factory=ClusterConfig)
+    notifications: NotificationConfig = Field(default_factory=NotificationConfig)
 
     @model_validator(mode="before")
     @classmethod

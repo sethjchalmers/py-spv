@@ -17,7 +17,11 @@ if TYPE_CHECKING:
     from spv_wallet.engine.services.utxo_service import UTXOService
     from spv_wallet.engine.services.xpub_service import XPubService
     from spv_wallet.engine.v2.engine import V2Engine
+    from spv_wallet.metrics.collector import EngineMetrics
+    from spv_wallet.notifications.service import NotificationService
+    from spv_wallet.notifications.webhook import WebhookManager
     from spv_wallet.paymail.client import PaymailClient
+    from spv_wallet.taskmanager.manager import TaskManager
 
 # Error messages
 _ERR_NOT_INITIALIZED = "Engine not initialized. Call initialize() first."
@@ -54,6 +58,10 @@ class SPVWalletEngine:
         self._contact_service: ContactService | None = None
         self._paymail_client: PaymailClient | None = None
         self._v2: V2Engine | None = None
+        self._task_manager: TaskManager | None = None
+        self._metrics: EngineMetrics | None = None
+        self._notifications: NotificationService | None = None
+        self._webhook_manager: WebhookManager | None = None
 
     async def initialize(self) -> None:
         """Initialize datastore, run migrations, and start services.
@@ -121,7 +129,58 @@ class SPVWalletEngine:
         self._v2 = V2Engine(self)
         self._v2.initialize()
 
-        # TODO Phase 7: Initialize task manager
+        # Initialize metrics
+        from spv_wallet.metrics.collector import EngineMetrics
+
+        self._metrics = EngineMetrics()
+
+        # Initialize notification service
+        from spv_wallet.notifications.service import NotificationService
+        from spv_wallet.notifications.webhook import WebhookManager
+
+        if self._config.notifications.enabled:
+            self._notifications = NotificationService()
+            await self._notifications.start()
+            self._webhook_manager = WebhookManager()
+            await self._webhook_manager.start()
+
+        # Initialize task manager and register cron jobs
+        from functools import partial
+
+        from spv_wallet.taskmanager.manager import CronJob, TaskManager
+        from spv_wallet.taskmanager.tasks import (
+            CALCULATE_METRICS_PERIOD,
+            DRAFT_CLEANUP_PERIOD,
+            SYNC_TRANSACTION_PERIOD,
+            task_calculate_metrics,
+            task_cleanup_draft_transactions,
+            task_sync_transactions,
+        )
+
+        if self._config.task.enabled:
+            self._task_manager = TaskManager(metrics=self._metrics)
+            self._task_manager.register(
+                "draft_transaction_clean_up",
+                CronJob(
+                    handler=partial(task_cleanup_draft_transactions, self),
+                    period=DRAFT_CLEANUP_PERIOD,
+                ),
+            )
+            self._task_manager.register(
+                "sync_transaction",
+                CronJob(
+                    handler=partial(task_sync_transactions, self),
+                    period=SYNC_TRANSACTION_PERIOD,
+                ),
+            )
+            self._task_manager.register(
+                "calculate_metrics",
+                CronJob(
+                    handler=partial(task_calculate_metrics, self, self._metrics),
+                    period=CALCULATE_METRICS_PERIOD,
+                ),
+            )
+            await self._task_manager.start()
 
         self._initialized = True
 
@@ -132,6 +191,22 @@ class SPVWalletEngine:
         """
         if not self._initialized:
             return
+
+        # Stop task manager first (depends on services)
+        if self._task_manager is not None:
+            await self._task_manager.stop()
+            self._task_manager = None
+
+        # Stop webhook manager and notification service
+        if self._webhook_manager is not None:
+            await self._webhook_manager.stop()
+            self._webhook_manager = None
+        if self._notifications is not None:
+            await self._notifications.stop()
+            self._notifications = None
+
+        # Clear metrics
+        self._metrics = None
 
         # Tear down services
         self._transaction_service = None
@@ -166,8 +241,6 @@ class SPVWalletEngine:
         if self._datastore is not None:
             await self._datastore.close()
             self._datastore = None
-
-        # TODO Phase 7: Close task manager
 
         self._initialized = False
 
@@ -279,6 +352,26 @@ class SPVWalletEngine:
         if self._v2 is None:
             raise RuntimeError(_ERR_NOT_INITIALIZED)
         return self._v2
+
+    @property
+    def metrics(self) -> EngineMetrics | None:
+        """Get the engine metrics (None if not initialized)."""
+        return self._metrics
+
+    @property
+    def task_manager(self) -> TaskManager | None:
+        """Get the task manager (None if not enabled)."""
+        return self._task_manager
+
+    @property
+    def notification_service(self) -> NotificationService | None:
+        """Get the notification service (None if not enabled)."""
+        return self._notifications
+
+    @property
+    def webhook_manager(self) -> WebhookManager | None:
+        """Get the webhook manager (None if not enabled)."""
+        return self._webhook_manager
 
     async def health_check(self) -> dict[str, str]:
         """Check health status of all engine components.

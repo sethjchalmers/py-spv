@@ -8,6 +8,8 @@ from typing import TYPE_CHECKING
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from prometheus_client import generate_latest
+from starlette.responses import Response
 
 from spv_wallet import __version__
 from spv_wallet.api.middleware.cors import setup_cors
@@ -16,6 +18,8 @@ from spv_wallet.api.v2 import v2_router
 from spv_wallet.config.settings import AppConfig
 from spv_wallet.engine.client import SPVWalletEngine
 from spv_wallet.errors.spv_errors import SPVError
+from spv_wallet.metrics.collector import EngineMetrics
+from spv_wallet.metrics.middleware import PrometheusMiddleware
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
@@ -32,6 +36,10 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     """
     config: AppConfig = app.state.config
     engine = SPVWalletEngine(config)
+
+    # Engine metrics
+    metrics = EngineMetrics()
+    app.state.metrics = metrics
 
     try:
         await engine.initialize()
@@ -78,6 +86,20 @@ def create_app(*, config: AppConfig | None = None) -> FastAPI:
     @app.get("/health", tags=["base"])
     async def health() -> dict[str, str]:
         return {"status": "ok"}
+
+    @app.get("/metrics", tags=["base"], include_in_schema=False)
+    async def metrics_endpoint() -> Response:
+        """Prometheus metrics endpoint."""
+        registry = app.state.metrics.registry if hasattr(app.state, "metrics") else None
+        body = generate_latest(registry) if registry else generate_latest()
+        return Response(
+            content=body,
+            media_type="text/plain; version=0.0.4; charset=utf-8",
+        )
+
+    # -- Prometheus request metrics middleware --
+    if hasattr(app.state, "metrics"):
+        app.add_middleware(PrometheusMiddleware, registry=app.state.metrics.registry)
 
     # -- Mount v1 API --
     app.include_router(v1_router)

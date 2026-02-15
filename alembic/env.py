@@ -15,8 +15,10 @@ from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 # Import all models so Alembic can detect them
-from spv_wallet.engine.models import Base  # noqa: F401 — registers models
-from spv_wallet.engine.models import ALL_MODELS  # noqa: F401
+from spv_wallet.engine.models import (
+    ALL_MODELS,  # noqa: F401
+    Base,
+)
 
 # Alembic Config object
 config = context.config
