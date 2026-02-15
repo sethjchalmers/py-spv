@@ -29,7 +29,12 @@ COPY --from=base /usr/local/bin/py-spv /usr/local/bin/py-spv
 COPY --from=base /app/src /app/src
 COPY alembic/ /app/alembic/
 
+RUN mkdir -p /data && chown spvwallet:spvwallet /data
+
 USER spvwallet
+
+ENV SPVWALLET_DB__ENGINE=sqlite
+ENV SPVWALLET_DB__DSN=sqlite+aiosqlite:////data/spv_wallet.db
 
 EXPOSE 3003
 EXPOSE 9090

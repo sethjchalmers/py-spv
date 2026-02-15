@@ -10,7 +10,7 @@ services:
       SPVWALLET_DB__ENGINE: postgresql
       SPVWALLET_DB__DSN: postgresql+asyncpg://spv:spv@db:5432/spv_wallet
       SPVWALLET_CACHE__ENGINE: redis
-      SPVWALLET_CACHE__REDIS_URL: redis://redis:6379/0
+      SPVWALLET_CACHE__URL: redis://redis:6379/0
       SPVWALLET_TASK__REDIS_URL: redis://redis:6379/1
       SPVWALLET_CLUSTER__COORDINATOR: redis
       SPVWALLET_CLUSTER__REDIS_URL: redis://redis:6379/2

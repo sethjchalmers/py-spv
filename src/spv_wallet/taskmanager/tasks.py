@@ -37,9 +37,10 @@ async def task_cleanup_draft_transactions(engine: SPVWalletEngine) -> None:
         from spv_wallet.engine.models.draft_transaction import DraftTransaction
 
         async with engine.datastore.session() as session:
-            now = datetime.now(tz=UTC)
+            now = datetime.now(tz=UTC).isoformat()
             stmt = delete(DraftTransaction).where(
                 DraftTransaction.status == "draft",
+                DraftTransaction.expires_at.isnot(None),
                 DraftTransaction.expires_at < now,
             )
             result = await session.execute(stmt)
@@ -103,12 +104,12 @@ async def task_calculate_metrics(engine: SPVWalletEngine, metrics: EngineMetrics
         from spv_wallet.engine.models.access_key import AccessKey
         from spv_wallet.engine.models.destination import Destination
         from spv_wallet.engine.models.paymail_address import PaymailAddress
-        from spv_wallet.engine.models.utxo import Utxo
+        from spv_wallet.engine.models.utxo import UTXO
         from spv_wallet.engine.models.xpub import Xpub
 
         async with engine.datastore.session() as session:
             xpub_count = (await session.execute(select(func.count(Xpub.id)))).scalar() or 0
-            utxo_count = (await session.execute(select(func.count(Utxo.id)))).scalar() or 0
+            utxo_count = (await session.execute(select(func.count(UTXO.id)))).scalar() or 0
             paymail_count = (
                 await session.execute(select(func.count(PaymailAddress.id)))
             ).scalar() or 0
