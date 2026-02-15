@@ -10,7 +10,6 @@ from spv_wallet.api.paymail_server.provider import PaymailServiceProvider
 from spv_wallet.engine.models.paymail_address import PaymailAddress
 from spv_wallet.errors.definitions import ErrPaymailNotFound
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

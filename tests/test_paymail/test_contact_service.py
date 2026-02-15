@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
 import pytest
 
-from spv_wallet.engine.models.contact import Contact
 from spv_wallet.engine.services.contact_service import (
     CONTACT_STATUS_AWAITING,
     CONTACT_STATUS_CONFIRMED,
@@ -15,11 +15,12 @@ from spv_wallet.engine.services.contact_service import (
     ContactService,
 )
 from spv_wallet.errors.definitions import (
-    ErrContactDuplicate,
     ErrContactInvalidStatus,
     ErrContactNotFound,
 )
 
+if TYPE_CHECKING:
+    from spv_wallet.engine.models.contact import Contact
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -90,7 +91,7 @@ def _mock_engine():
 
 class TestCreateContact:
     async def test_create_success(self):
-        engine, storage = _mock_engine()
+        engine, _storage = _mock_engine()
         svc = ContactService(engine)
         contact = await svc.create_contact(
             "xpub1",
@@ -142,7 +143,7 @@ class TestCreateContact:
 
 class TestStatusTransitions:
     async def test_unconfirmed_to_awaiting(self):
-        engine, storage = _mock_engine()
+        engine, _storage = _mock_engine()
         svc = ContactService(engine)
         contact = await svc.create_contact("xpub1", "user@test.com")
 
@@ -206,7 +207,7 @@ class TestStatusTransitions:
 
 class TestUpsertContact:
     async def test_upsert_creates_new(self):
-        engine, storage = _mock_engine()
+        engine, _storage = _mock_engine()
         svc = ContactService(engine)
         contact = await svc.upsert_contact(
             "xpub1", "new@test.com", full_name="New User"
@@ -215,7 +216,7 @@ class TestUpsertContact:
         assert contact.full_name == "New User"
 
     async def test_upsert_updates_existing(self):
-        engine, storage = _mock_engine()
+        engine, _storage = _mock_engine()
         svc = ContactService(engine)
 
         # Create first

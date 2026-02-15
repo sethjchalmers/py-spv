@@ -11,7 +11,8 @@ from spv_wallet.errors.definitions import (
     ErrPaymailP2PSendFailed,
     ErrPaymailPKIFailed,
 )
-from spv_wallet.paymail.client import PaymailClient, _DEFAULT_PORT
+from spv_wallet.errors.spv_errors import SPVError
+from spv_wallet.paymail.client import _DEFAULT_PORT, PaymailClient
 from spv_wallet.paymail.models import (
     BRFC_P2P_PAYMENT_DESTINATION,
     BRFC_P2P_SEND_TRANSACTION,
@@ -19,7 +20,6 @@ from spv_wallet.paymail.models import (
     P2PTransaction,
     SanitizedPaymail,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -120,7 +120,7 @@ class TestPaymailClientLifecycle:
 
     async def test_not_connected_raises(self):
         client = PaymailClient()
-        with pytest.raises(Exception):
+        with pytest.raises(SPVError):
             client._ensure_connected()
 
 

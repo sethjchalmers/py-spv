@@ -33,7 +33,9 @@ ErrTransactionRejected = SPVError(
 
 # -- Paymail ---------------------------------------------------------------
 
-ErrPaymailNotFound = SPVError("paymail address not found", status_code=404, code="paymail-not-found")
+ErrPaymailNotFound = SPVError(
+    "paymail address not found", status_code=404, code="paymail-not-found"
+)
 ErrInvalidPaymail = SPVError(
     "invalid paymail address format", status_code=400, code="invalid-paymail"
 )

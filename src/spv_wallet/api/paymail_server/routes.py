@@ -68,19 +68,35 @@ async def capabilities(request: Request) -> dict:
     and their URL templates.
     """
     base_url = str(request.base_url).rstrip("/")
+    at = "{alias}@{domain.tld}"
+    pk = f"{at}/{{pubkey}}"
 
     return {
         "bsvalias": "1.0",
         "capabilities": {
-            BRFC_PKI: f"{base_url}/v1/bsvalias/id/{{alias}}@{{domain.tld}}",
-            BRFC_SENDER_VALIDATION: f"{base_url}/v1/bsvalias/sender-validation/{{alias}}@{{domain.tld}}",
-            BRFC_VERIFY_PUBLIC_KEY: f"{base_url}/v1/bsvalias/verify-pubkey/{{alias}}@{{domain.tld}}/{{pubkey}}",
-            BRFC_PUBLIC_PROFILE: f"{base_url}/v1/bsvalias/public-profile/{{alias}}@{{domain.tld}}",
-            BRFC_P2P_PAYMENT_DESTINATION: f"{base_url}/v1/bsvalias/p2p-payment-destination/{{alias}}@{{domain.tld}}",
-            BRFC_P2P_SEND_TRANSACTION: f"{base_url}/v1/bsvalias/receive-transaction/{{alias}}@{{domain.tld}}",
-            BRFC_BEEF: f"{base_url}/v1/bsvalias/beef/{{alias}}@{{domain.tld}}",
-            BRFC_PIKE_INVITE: f"{base_url}/v1/bsvalias/pike/invite/{{alias}}@{{domain.tld}}",
-            BRFC_PIKE_OUTPUTS: f"{base_url}/v1/bsvalias/pike/outputs/{{alias}}@{{domain.tld}}",
+            BRFC_PKI: f"{base_url}/v1/bsvalias/id/{at}",
+            BRFC_SENDER_VALIDATION: (
+                f"{base_url}/v1/bsvalias/sender-validation/{at}"
+            ),
+            BRFC_VERIFY_PUBLIC_KEY: (
+                f"{base_url}/v1/bsvalias/verify-pubkey/{pk}"
+            ),
+            BRFC_PUBLIC_PROFILE: (
+                f"{base_url}/v1/bsvalias/public-profile/{at}"
+            ),
+            BRFC_P2P_PAYMENT_DESTINATION: (
+                f"{base_url}/v1/bsvalias/p2p-payment-destination/{at}"
+            ),
+            BRFC_P2P_SEND_TRANSACTION: (
+                f"{base_url}/v1/bsvalias/receive-transaction/{at}"
+            ),
+            BRFC_BEEF: f"{base_url}/v1/bsvalias/beef/{at}",
+            BRFC_PIKE_INVITE: (
+                f"{base_url}/v1/bsvalias/pike/invite/{at}"
+            ),
+            BRFC_PIKE_OUTPUTS: (
+                f"{base_url}/v1/bsvalias/pike/outputs/{at}"
+            ),
         },
     }
 

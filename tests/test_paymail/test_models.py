@@ -12,14 +12,13 @@ from spv_wallet.paymail.models import (
     BRFC_PKI,
     Capabilities,
     P2PDestinationsResponse,
-    P2PSendResponse,
     P2PSenderMetadata,
+    P2PSendResponse,
     P2PTransaction,
     PaymentDestination,
     PKIResponse,
     SanitizedPaymail,
 )
-
 
 # ---------------------------------------------------------------------------
 # SanitizedPaymail

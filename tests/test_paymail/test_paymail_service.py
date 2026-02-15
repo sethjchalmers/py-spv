@@ -2,19 +2,19 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, PropertyMock
+from typing import TYPE_CHECKING
+from unittest.mock import MagicMock
 
 import pytest
 
-from spv_wallet.engine.models.paymail_address import PaymailAddress
 from spv_wallet.engine.services.paymail_service import PaymailService
 from spv_wallet.errors.definitions import (
     ErrPaymailDomainNotAllowed,
-    ErrPaymailDuplicate,
-    ErrPaymailNotFound,
 )
 from spv_wallet.utils.crypto import sha256
 
+if TYPE_CHECKING:
+    from spv_wallet.engine.models.paymail_address import PaymailAddress
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -61,7 +61,12 @@ def _mock_engine(*, domains: list[str] | None = None):
                 # Find matching records
                 deleted = 0
                 for key in list(storage.keys()):
-                    for clause in stmt.whereclause.clauses if hasattr(stmt.whereclause, 'clauses') else [stmt.whereclause]:
+                    clauses = (
+                        stmt.whereclause.clauses
+                        if hasattr(stmt.whereclause, 'clauses')
+                        else [stmt.whereclause]
+                    )
+                    for clause in clauses:
                         if hasattr(clause, 'right') and storage[key].id == clause.right.value:
                             del storage[key]
                             deleted += 1
@@ -91,7 +96,7 @@ def _mock_engine(*, domains: list[str] | None = None):
 
 class TestCreatePaymail:
     async def test_create_success(self):
-        engine, storage = _mock_engine()
+        engine, _storage = _mock_engine()
         svc = PaymailService(engine)
         pm = await svc.create_paymail(
             "xpub123", "alice@example.com", public_name="Alice"
@@ -163,7 +168,7 @@ class TestDomainValidation:
 
 class TestPaymailLookup:
     async def test_get_by_id_found(self):
-        engine, storage = _mock_engine()
+        engine, _storage = _mock_engine()
         svc = PaymailService(engine)
         await svc.create_paymail("xpub1", "alice@test.com")
         paymail_id = sha256(b"alice@test.com").hex()

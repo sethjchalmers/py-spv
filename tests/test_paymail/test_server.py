@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from spv_wallet.api.paymail_server.routes import router
 from spv_wallet.paymail.models import (
     BRFC_BEEF,
