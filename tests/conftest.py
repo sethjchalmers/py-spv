@@ -55,5 +55,5 @@ def test_client(app_config):
 
     from spv_wallet.api.app import create_app
 
-    app = create_app()
-    return TestClient(app)
+    app = create_app(config=app_config)
+    return TestClient(app, raise_server_exceptions=False)
