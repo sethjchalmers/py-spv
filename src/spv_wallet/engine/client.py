@@ -10,10 +10,13 @@ if TYPE_CHECKING:
     from spv_wallet.config.settings import AppConfig
     from spv_wallet.datastore.client import Datastore
     from spv_wallet.engine.services.access_key_service import AccessKeyService
+    from spv_wallet.engine.services.contact_service import ContactService
     from spv_wallet.engine.services.destination_service import DestinationService
+    from spv_wallet.engine.services.paymail_service import PaymailService
     from spv_wallet.engine.services.transaction_service import TransactionService
     from spv_wallet.engine.services.utxo_service import UTXOService
     from spv_wallet.engine.services.xpub_service import XPubService
+    from spv_wallet.paymail.client import PaymailClient
 
 # Error messages
 _ERR_NOT_INITIALIZED = "Engine not initialized. Call initialize() first."
@@ -46,6 +49,9 @@ class SPVWalletEngine:
         self._utxo_service: UTXOService | None = None
         self._access_key_service: AccessKeyService | None = None
         self._transaction_service: TransactionService | None = None
+        self._paymail_service: PaymailService | None = None
+        self._contact_service: ContactService | None = None
+        self._paymail_client: PaymailClient | None = None
 
     async def initialize(self) -> None:
         """Initialize datastore, run migrations, and start services.
@@ -76,7 +82,9 @@ class SPVWalletEngine:
 
         # Initialize services
         from spv_wallet.engine.services.access_key_service import AccessKeyService
+        from spv_wallet.engine.services.contact_service import ContactService
         from spv_wallet.engine.services.destination_service import DestinationService
+        from spv_wallet.engine.services.paymail_service import PaymailService
         from spv_wallet.engine.services.transaction_service import TransactionService
         from spv_wallet.engine.services.utxo_service import UTXOService
         from spv_wallet.engine.services.xpub_service import XPubService
@@ -86,6 +94,14 @@ class SPVWalletEngine:
         self._utxo_service = UTXOService(self)
         self._access_key_service = AccessKeyService(self)
         self._transaction_service = TransactionService(self)
+        self._paymail_service = PaymailService(self)
+        self._contact_service = ContactService(self)
+
+        # Initialize paymail client (outgoing)
+        from spv_wallet.paymail.client import PaymailClient
+
+        self._paymail_client = PaymailClient()
+        await self._paymail_client.connect()
 
         # Initialize chain service (ARC + BHS)
         from spv_wallet.chain.service import ChainService
@@ -115,6 +131,13 @@ class SPVWalletEngine:
         self._destination_service = None
         self._utxo_service = None
         self._access_key_service = None
+        self._paymail_service = None
+        self._contact_service = None
+
+        # Close paymail client
+        if self._paymail_client is not None:
+            await self._paymail_client.close()
+            self._paymail_client = None
 
         # Close chain service
         if self._chain is not None:
@@ -207,6 +230,27 @@ class SPVWalletEngine:
         if self._transaction_service is None:
             raise RuntimeError(_ERR_NOT_INITIALIZED)
         return self._transaction_service
+
+    @property
+    def paymail_service(self) -> PaymailService:
+        """Get the paymail address service."""
+        if self._paymail_service is None:
+            raise RuntimeError(_ERR_NOT_INITIALIZED)
+        return self._paymail_service
+
+    @property
+    def contact_service(self) -> ContactService:
+        """Get the contact service."""
+        if self._contact_service is None:
+            raise RuntimeError(_ERR_NOT_INITIALIZED)
+        return self._contact_service
+
+    @property
+    def paymail_client(self) -> PaymailClient:
+        """Get the outgoing paymail client."""
+        if self._paymail_client is None:
+            raise RuntimeError(_ERR_NOT_INITIALIZED)
+        return self._paymail_client
 
     @property
     def chain_service(self) -> ChainService | None:
