@@ -1,21 +1,30 @@
 """Wallet wizard — create new wallet or import existing one.
 
 The wizard runs before the main window is shown.  Flow:
-  1.  Choose wallet file path (.sqlite)
-  2.  Choose mode: Generate New or Import Existing
-  3a. Generate → shows 12-word seed phrase to back up → derives xPub
-  3b. Import   → paste seed phrase OR raw xPub
+  1.  Choose mode: Open Existing / Generate New / Import
+  2a. Open Existing → select from previously-created wallets
+  2b. Generate → shows 12-word seed phrase to back up → derives xPub
+  2c. Import   → paste seed phrase OR raw xPub
+
+Wallet databases are stored in a ``wallets/`` subdirectory relative to
+the application.  When running from a frozen bundle (PyInstaller / DMG /
+EXE) the data directory sits next to the executable.  In development it
+falls back to ``~/.py-spv/``.
 """
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
+from PySide6.QtGui import QKeySequence
 from PySide6.QtWidgets import (
-    QFileDialog,
+    QApplication,
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QListWidget,
+    QListWidgetItem,
     QMessageBox,
     QPushButton,
     QRadioButton,
@@ -26,11 +35,101 @@ from PySide6.QtWidgets import (
     QWizardPage,
 )
 
+
+class _SeedDisplay(QTextEdit):
+    """Read-only text widget that copies only raw seed words (no numbers)."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._raw_words = ""
+        self.setReadOnly(True)
+
+    def set_seed(self, mnemonic: str) -> None:
+        """Set the mnemonic and render a numbered HTML grid."""
+        self._raw_words = mnemonic
+        words = mnemonic.split()
+        rows: list[str] = []
+        for i in range(0, len(words), 3):
+            cells = ""
+            for j in range(3):
+                if i + j < len(words):
+                    num = i + j + 1
+                    cells += (
+                        f'<td style="padding: 4px 12px 4px 0;">'
+                        f'<span style="color: #888;">{num:2d}.</span> {words[i + j]}'
+                        f"</td>"
+                    )
+            rows.append(f"<tr>{cells}</tr>")
+        self.setHtml(f'<table style="font-size:16px;">{"" .join(rows)}</table>')
+
+    def keyPressEvent(self, event) -> None:  # type: ignore[override]
+        """Intercept Ctrl+C / Cmd+C to copy only seed words."""
+        if event.matches(QKeySequence.StandardKey.Copy):
+            clipboard = QApplication.clipboard()
+            if clipboard is not None:
+                clipboard.setText(self._raw_words)
+            return
+        super().keyPressEvent(event)
+
+    def contextMenuEvent(self, event) -> None:  # type: ignore[override]
+        """Replace default context menu copy with seed-only copy."""
+        menu = self.createStandardContextMenu()
+        if menu is None:
+            return
+        for action in menu.actions():
+            if action.text() and "copy" in action.text().lower().replace("&", ""):
+                action.triggered.disconnect()
+                action.triggered.connect(self._copy_seed)
+        menu.exec(event.globalPos())
+
+    def _copy_seed(self) -> None:
+        clipboard = QApplication.clipboard()
+        if clipboard is not None:
+            clipboard.setText(self._raw_words)
+
 # Page IDs for non-linear navigation
-_PAGE_FILE = 0
-_PAGE_MODE = 1
-_PAGE_GENERATE = 2
-_PAGE_IMPORT = 3
+_PAGE_MODE = 0
+_PAGE_GENERATE = 1
+_PAGE_IMPORT = 2
+
+
+# ---------------------------------------------------------------------------
+# Application data directory
+# ---------------------------------------------------------------------------
+
+
+def _get_wallets_dir() -> Path:
+    """Return the ``wallets/`` directory for storing wallet databases.
+
+    When the app is frozen (PyInstaller / cx_Freeze), the data directory
+    lives next to the executable — exactly like ElectrumSV's portable
+    mode.  In development (un-frozen) it falls back to ``~/.py-spv/``.
+    """
+    base = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path.home() / ".py-spv"
+    wallets = base / "wallets"
+    wallets.mkdir(parents=True, exist_ok=True)
+    return wallets
+
+
+def _list_existing_wallets() -> list[Path]:
+    """Return sorted list of ``.sqlite`` wallet files in the wallets dir."""
+    wallets_dir = _get_wallets_dir()
+    return sorted(wallets_dir.glob("*.sqlite"))
+
+
+def _next_wallet_name() -> str:
+    """Generate the next unused wallet filename like ``wallet_1.sqlite``."""
+    existing = _list_existing_wallets()
+    existing_names = {p.name for p in existing}
+    n = 1
+    while f"wallet_{n}.sqlite" in existing_names:
+        n += 1
+    return f"wallet_{n}.sqlite"
+
+
+def _next_wallet_stem() -> str:
+    """Return a default wallet name without extension, e.g. ``wallet_1``."""
+    return _next_wallet_name().removesuffix(".sqlite")
 
 
 # ---------------------------------------------------------------------------
@@ -66,112 +165,123 @@ def _mnemonic_to_xpub(words: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Page 1 — Wallet File
+# Page 1 — Choose Mode (Generate or Import)
 # ---------------------------------------------------------------------------
 
 
-class WalletFilePage(QWizardPage):
-    """Choose or create a wallet file."""
-
-    def __init__(self, parent: QWidget | None = None) -> None:
-        super().__init__(parent)
-        self.setTitle("Wallet File")
-        self.setSubTitle("Choose where to store your wallet data.")
-
-        layout = QVBoxLayout(self)
-        layout.setSpacing(12)
-
-        layout.addWidget(QLabel("Wallet file path:"))
-
-        row = QHBoxLayout()
-        self._path_input = QLineEdit()
-        self._path_input.setPlaceholderText("/path/to/my-wallet.sqlite")
-        self._path_input.setProperty("role", "mono")
-
-        # Set a sensible default
-        default_path = str(Path.home() / "py-spv-wallet.sqlite")
-        self._path_input.setText(default_path)
-
-        row.addWidget(self._path_input, stretch=1)
-
-        self._browse_btn = QPushButton("Browse…")
-        self._browse_btn.setFixedWidth(100)
-        row.addWidget(self._browse_btn)
-        layout.addLayout(row)
-
-        self._status = QLabel("")
-        self._status.setProperty("role", "caption")
-        layout.addWidget(self._status)
-
-        self.registerField("wallet_path*", self._path_input)
-        self._browse_btn.clicked.connect(self._on_browse)
-
-    def _on_browse(self) -> None:
-        path, _ = QFileDialog.getSaveFileName(
-            self,
-            "Choose Wallet Location",
-            "py-spv-wallet.sqlite",
-            "SQLite files (*.sqlite *.db);;All files (*)",
-        )
-        if path:
-            if not Path(path).suffix:
-                path += ".sqlite"
-            self._path_input.setText(path)
-
-
-# ---------------------------------------------------------------------------
-# Page 2 — Choose Mode (Generate or Import)
-# ---------------------------------------------------------------------------
+_BTN_STYLE = "font-size: 14px; padding: 8px;"
 
 
 class ModePage(QWizardPage):
-    """Choose between generating a new wallet or importing an existing one."""
+    """Launcher page: open an existing wallet or start a new one."""
+
+    _chosen_flow: str = ""  # "generate" or "import"
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setTitle("Wallet Setup")
-        self.setSubTitle("How would you like to set up your wallet?")
+        self.setSubTitle("Open a wallet you've already created, or set up a new one.")
 
         layout = QVBoxLayout(self)
-        layout.setSpacing(16)
+        layout.setSpacing(10)
 
-        self._generate_radio = QRadioButton("🆕  Create a new wallet")
-        self._generate_radio.setChecked(True)
-        self._generate_radio.setStyleSheet("font-size: 15px; padding: 8px;")
-        layout.addWidget(self._generate_radio)
+        # ── Existing wallets section (hidden when none exist) ──
+        self._existing_label = QLabel("Your wallets:")
+        self._existing_label.setStyleSheet("font-weight: 600; font-size: 14px;")
+        layout.addWidget(self._existing_label)
 
-        gen_desc = QLabel(
-            "Generate a new 12-word seed phrase. You'll be shown the words\n"
-            "to write down and keep safe — they are your wallet backup."
-        )
-        gen_desc.setProperty("role", "caption")
-        gen_desc.setIndent(28)
-        gen_desc.setWordWrap(True)
-        layout.addWidget(gen_desc)
+        self._wallet_list = QListWidget()
+        self._wallet_list.setMaximumHeight(120)
+        self._wallet_list.setStyleSheet("font-size: 14px; padding: 4px;")
+        layout.addWidget(self._wallet_list)
 
-        layout.addSpacing(8)
+        self._open_btn = QPushButton("📂  Open Selected Wallet")
+        self._open_btn.setStyleSheet(_BTN_STYLE)
+        self._open_btn.setEnabled(False)
+        layout.addWidget(self._open_btn)
 
-        self._import_radio = QRadioButton("📥  Import an existing wallet")
-        self._import_radio.setStyleSheet("font-size: 15px; padding: 8px;")
-        layout.addWidget(self._import_radio)
+        self._separator = QLabel("")
+        self._separator.setFixedHeight(1)
+        self._separator.setStyleSheet("background-color: #555;")
+        layout.addWidget(self._separator)
 
-        imp_desc = QLabel(
-            "Restore from a seed phrase you've already backed up,\n"
-            "or import a raw xPub key for watch-only mode."
-        )
-        imp_desc.setProperty("role", "caption")
-        imp_desc.setIndent(28)
-        imp_desc.setWordWrap(True)
-        layout.addWidget(imp_desc)
+        # ── New wallet actions ──
+        action_label = QLabel("Or set up a new wallet:")
+        action_label.setStyleSheet("font-weight: 600; font-size: 14px;")
+        layout.addWidget(action_label)
+
+        self._create_btn = QPushButton("🆕  Create a New Wallet")
+        self._create_btn.setStyleSheet(_BTN_STYLE)
+        layout.addWidget(self._create_btn)
+
+        self._import_btn = QPushButton("📥  Import / Restore a Wallet")
+        self._import_btn.setStyleSheet(_BTN_STYLE)
+        layout.addWidget(self._import_btn)
 
         layout.addStretch()
 
-    @property
-    def is_generate(self) -> bool:
-        return self._generate_radio.isChecked()
+        # Wire signals
+        self._wallet_list.currentRowChanged.connect(self._on_wallet_selected)
+        self._open_btn.clicked.connect(self._on_open_clicked)
+        self._create_btn.clicked.connect(self._on_create_clicked)
+        self._import_btn.clicked.connect(self._on_import_clicked)
+
+    # -- lifecycle --
+
+    def initializePage(self) -> None:
+        """Populate the list of existing wallets each time we enter."""
+        self._wallet_list.clear()
+        wallets = _list_existing_wallets()
+        for wp in wallets:
+            item = QListWidgetItem(f"  {wp.stem}")
+            item.setData(256, str(wp))
+            self._wallet_list.addItem(item)
+
+        has_wallets = len(wallets) > 0
+        self._existing_label.setVisible(has_wallets)
+        self._wallet_list.setVisible(has_wallets)
+        self._open_btn.setVisible(has_wallets)
+        self._separator.setVisible(has_wallets)
+
+    # -- signals --
+
+    def _on_wallet_selected(self, row: int) -> None:
+        self._open_btn.setEnabled(row >= 0)
+
+    def _on_open_clicked(self) -> None:
+        """Directly accept the wizard with the selected wallet."""
+        wizard = self.wizard()
+        if wizard is not None and isinstance(wizard, WalletWizard):
+            item = self._wallet_list.currentItem()
+            if item is not None:
+                wizard._selected_existing_path = item.data(256)
+                wizard.accept()
+
+    def _on_create_clicked(self) -> None:
+        """Navigate to the Generate page."""
+        self._chosen_flow = "generate"
+        self.completeChanged.emit()
+        wizard = self.wizard()
+        if wizard is not None:
+            wizard.next()
+
+    def _on_import_clicked(self) -> None:
+        """Navigate to the Import page."""
+        self._chosen_flow = "import"
+        self.completeChanged.emit()
+        wizard = self.wizard()
+        if wizard is not None:
+            wizard.next()
+
+    # -- QWizardPage overrides --
+
+    def isComplete(self) -> bool:
+        return self._chosen_flow != ""
 
     def nextId(self) -> int:
-        return _PAGE_GENERATE if self.is_generate else _PAGE_IMPORT
+        if self._chosen_flow == "import":
+            return _PAGE_IMPORT
+        return _PAGE_GENERATE
 
 
 # ---------------------------------------------------------------------------
@@ -180,24 +290,35 @@ class ModePage(QWizardPage):
 
 
 class GeneratePage(QWizardPage):
-    """Generate and display a 12-word seed phrase for backup."""
+    """Name the wallet and display a 12-word seed phrase for backup."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setTitle("Your Seed Phrase")
+        self.setTitle("Create New Wallet")
         self.setSubTitle(
-            "Write down these 12 words in order and keep them safe.\n"
+            "Name your wallet, then write down the 12-word seed phrase.\n"
             "Anyone with these words can access your wallet. Never share them."
         )
         self._mnemonic = ""
         self._confirmed = False
 
         layout = QVBoxLayout(self)
-        layout.setSpacing(16)
+        layout.setSpacing(12)
 
-        # Seed phrase display
-        self._seed_display = QTextEdit()
-        self._seed_display.setReadOnly(True)
+        # Wallet name
+        name_row = QHBoxLayout()
+        name_row.addWidget(QLabel("Wallet name:"))
+        self._name_input = QLineEdit()
+        self._name_input.setPlaceholderText("e.g. My Wallet")
+        self._name_input.setMaximumWidth(260)
+        name_row.addWidget(self._name_input)
+        name_row.addStretch()
+        layout.addLayout(name_row)
+
+        layout.addSpacing(4)
+
+        # Seed phrase display (copies only raw words, no numbers)
+        self._seed_display = _SeedDisplay()
         self._seed_display.setMaximumHeight(120)
         self._seed_display.setProperty("role", "mono")
         self._seed_display.setStyleSheet("font-size: 16px; line-height: 1.8; padding: 12px;")
@@ -228,21 +349,12 @@ class GeneratePage(QWizardPage):
         self.registerField("raw_xpub", self._xpub_holder)
 
     def initializePage(self) -> None:
-        """Generate a fresh mnemonic each time this page is shown."""
+        """Generate a fresh mnemonic and pre-fill wallet name."""
         self._mnemonic = _generate_mnemonic()
         self._confirmed = False
         self._confirm_btn.setChecked(False)
-
-        # Format as numbered grid
-        words = self._mnemonic.split()
-        lines = []
-        for i in range(0, len(words), 3):
-            row = "    ".join(
-                f"{i + j + 1:2d}. {words[i + j]}" for j in range(3) if i + j < len(words)
-            )
-            lines.append(row)
-        self._seed_display.setText("\n".join(lines))
-
+        self._seed_display.set_seed(self._mnemonic)
+        self._name_input.setText(_next_wallet_stem())
         self.completeChanged.emit()
 
     def _on_confirm(self, checked: bool) -> None:
@@ -254,7 +366,15 @@ class GeneratePage(QWizardPage):
         self.completeChanged.emit()
 
     def isComplete(self) -> bool:
-        return self._confirmed
+        return self._confirmed and len(self._name_input.text().strip()) > 0
+
+    @property
+    def wallet_name(self) -> str:
+        """Return the sanitised wallet filename."""
+        name = self._name_input.text().strip() or _next_wallet_stem()
+        if not name.endswith(".sqlite"):
+            name += ".sqlite"
+        return name
 
     def nextId(self) -> int:
         return -1  # final page
@@ -271,10 +391,22 @@ class ImportPage(QWizardPage):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setTitle("Import Wallet")
-        self.setSubTitle("Restore from a seed phrase, or paste a raw xPub for watch-only mode.")
+        self.setSubTitle("Name your wallet, then restore from a seed phrase or paste an xPub.")
 
         layout = QVBoxLayout(self)
         layout.setSpacing(12)
+
+        # Wallet name
+        name_row = QHBoxLayout()
+        name_row.addWidget(QLabel("Wallet name:"))
+        self._name_input = QLineEdit()
+        self._name_input.setPlaceholderText("e.g. My Wallet")
+        self._name_input.setMaximumWidth(260)
+        name_row.addWidget(self._name_input)
+        name_row.addStretch()
+        layout.addLayout(name_row)
+
+        layout.addSpacing(4)
 
         # Seed phrase input
         self._seed_radio = QRadioButton("Seed phrase (12 or 24 words)")
@@ -321,13 +453,22 @@ class ImportPage(QWizardPage):
         layout.addWidget(self._xpub_holder)
         self.registerField("raw_xpub_import", self._xpub_holder)
 
+    def initializePage(self) -> None:
+        """Pre-fill wallet name."""
+        self._name_input.setText(_next_wallet_stem())
+
     def _on_mode_toggle(self) -> None:
         seed_mode = self._seed_radio.isChecked()
         self._seed_input.setEnabled(seed_mode)
         self._xpub_input.setEnabled(not seed_mode)
 
     def validatePage(self) -> bool:
-        """Validate and resolve the xPub."""
+        """Validate wallet name and resolve the xPub."""
+        if not self._name_input.text().strip():
+            QMessageBox.warning(
+                self, "Wallet name required", "Please enter a name for your wallet."
+            )
+            return False
         if self._seed_radio.isChecked():
             words = self._seed_input.toPlainText().strip()
             word_count = len(words.split())
@@ -362,21 +503,25 @@ class ImportPage(QWizardPage):
             self._xpub_holder.setText(text)
             return True
 
+    @property
+    def wallet_name(self) -> str:
+        """Return the sanitised wallet filename."""
+        name = self._name_input.text().strip() or _next_wallet_stem()
+        if not name.endswith(".sqlite"):
+            name += ".sqlite"
+        return name
+
     def nextId(self) -> int:
         return -1  # final page
-
-
-# ---------------------------------------------------------------------------
-# Wizard
-# ---------------------------------------------------------------------------
 
 
 class WalletWizard(QWizard):
     """Multi-step wizard for wallet setup.
 
     Flows:
-        File → Mode → Generate (show seed phrase)  → done
-        File → Mode → Import   (seed or xPub)      → done
+        Mode → "Open Selected Wallet" button → done  (existing wallet)
+        Mode → Create → Generate (name + seed) → done  (new wallet)
+        Mode → Import  (name + seed / xPub)    → done  (new wallet)
 
     Usage::
 
@@ -386,24 +531,35 @@ class WalletWizard(QWizard):
             raw_xpub    = wizard.raw_xpub()
     """
 
+    # Set by ModePage._on_open_clicked when user opens an existing wallet.
+    _selected_existing_path: str | None = None
+
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("py-spv — Wallet Setup")
-        self.setMinimumSize(650, 480)
+        self.setMinimumSize(650, 520)
         self.setWizardStyle(QWizard.WizardStyle.ModernStyle)
 
-        self.setPage(_PAGE_FILE, WalletFilePage())
-        self.setPage(_PAGE_MODE, ModePage())
-        self.setPage(_PAGE_GENERATE, GeneratePage())
-        self.setPage(_PAGE_IMPORT, ImportPage())
+        self._mode_page = ModePage()
+        self._generate_page = GeneratePage()
+        self._import_page = ImportPage()
+        self.setPage(_PAGE_MODE, self._mode_page)
+        self.setPage(_PAGE_GENERATE, self._generate_page)
+        self.setPage(_PAGE_IMPORT, self._import_page)
 
     def wallet_path(self) -> str:
-        """Return the chosen wallet file path."""
-        return self.field("wallet_path") or ""
+        """Return the wallet file path for the chosen flow."""
+        if self._selected_existing_path:
+            return self._selected_existing_path
+
+        if self._mode_page._chosen_flow == "import":
+            name = self._import_page.wallet_name
+        else:
+            name = self._generate_page.wallet_name
+        return str(_get_wallets_dir() / name)
 
     def raw_xpub(self) -> str:
         """Return the resolved xPub string (from generate or import)."""
-        # Generate page stores in "raw_xpub", import in "raw_xpub_import"
         xpub = (self.field("raw_xpub") or "").strip()
         if not xpub:
             xpub = (self.field("raw_xpub_import") or "").strip()

@@ -49,7 +49,8 @@ def main() -> None:
     window.show()
 
     # Initialize engine (async, non-blocking)
-    api.engine_ready.connect(lambda: api.register_xpub(raw_xpub))
+    if raw_xpub:
+        api.engine_ready.connect(lambda: api.register_xpub(raw_xpub))
     api.initialize(wallet_path)
 
     sys.exit(app.exec())
