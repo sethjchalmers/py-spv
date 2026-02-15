@@ -183,6 +183,23 @@ Build `py-spv` as a feature-parity Python port using idiomatic Python tooling:
 | **Widgets** | `desktop/widgets/*.py` | ✅ Complete | AmountEdit, QRWidget, StatusBar, Card, helpers |
 | **App Entry** | `desktop/app.py` | ✅ Complete | Wizard → engine init → MainWindow lifecycle |
 
+> **TODO — Paymail for Desktop (Production)**
+>
+> The desktop app currently uses the engine in **embedded mode** (direct Python calls, local SQLite, no HTTP server).
+> This means it **cannot host a Paymail server** — Paymail requires a publicly routable HTTPS endpoint so
+> other wallets can discover addresses and negotiate P2P payments via `user@domain.tld`.
+>
+> Options to resolve for production:
+> 1. **Third-party Paymail provider** — register the user's paymail with an external hosted service (simplest).
+> 2. **Built-in lightweight Paymail relay** — the desktop app registers with a cloud relay that proxies
+>    Paymail requests back to the app (requires a relay service, but keeps keys local).
+> 3. **Companion server deployment** — bundle deployment scripts (Docker Compose / systemd) so the user
+>    can run the full SPV Wallet API alongside the desktop app, with the API handling Paymail publicly.
+> 4. **No Paymail** — the desktop app works fine with raw BSV addresses only; Paymail is optional.
+>
+> Until one of these is implemented, the desktop wallet can send/receive via raw addresses but cannot
+> be discovered by other wallets via a Paymail handle.
+
 #### Integration Tests
 
 | Test Module | File | Tests | Description |
