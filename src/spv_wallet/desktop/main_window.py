@@ -14,21 +14,27 @@ from PySide6.QtWidgets import (
 )
 
 from spv_wallet.desktop.theme import DARK_STYLESHEET
+from spv_wallet.desktop.views.contacts import ContactsPanel
 from spv_wallet.desktop.views.history import HistoryPanel
+from spv_wallet.desktop.views.keys import KeysPanel
 from spv_wallet.desktop.views.overview import OverviewPanel
 from spv_wallet.desktop.views.receive import ReceivePanel
 from spv_wallet.desktop.views.send import SendPanel
 from spv_wallet.desktop.views.settings import SettingsPanel
+from spv_wallet.desktop.views.utxo import UTXOPanel
 from spv_wallet.desktop.wallet_api import WalletAPI
 from spv_wallet.desktop.widgets.status_bar import WalletStatusBar
 
-# Navigation items: (label, icon hint)
+# Navigation items
 _NAV_ITEMS = [
-    ("Overview", "🏠"),
-    ("Send", "📤"),
-    ("Receive", "📥"),
-    ("Transactions", "📋"),
-    ("Settings", "⚙️"),
+    "Overview",
+    "Send",
+    "Receive",
+    "Transactions",
+    "Keys",
+    "UTXOs",
+    "Contacts",
+    "Settings",
 ]
 
 
@@ -84,6 +90,9 @@ class MainWindow(QMainWindow):
             SendPanel(self._api),
             ReceivePanel(self._api),
             HistoryPanel(self._api),
+            KeysPanel(self._api),
+            UTXOPanel(self._api),
+            ContactsPanel(self._api),
             SettingsPanel(self._api),
         ]
         for panel in self._panels:
@@ -117,8 +126,8 @@ class MainWindow(QMainWindow):
         self._nav_group.setExclusive(True)
         self._nav_buttons: list[QPushButton] = []
 
-        for idx, (label, icon) in enumerate(_NAV_ITEMS):
-            btn = QPushButton(f" {icon}  {label}")
+        for idx, label in enumerate(_NAV_ITEMS):
+            btn = QPushButton(f"  {label}")
             btn.setProperty("role", "nav")
             btn.setCheckable(True)
             self._nav_group.addButton(btn, idx)

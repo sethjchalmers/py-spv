@@ -73,7 +73,7 @@ class ReceivePanel(QWidget):
         btn_row = QHBoxLayout()
         btn_row.addStretch()
 
-        self._copy_btn = QPushButton("📋 Copy")
+        self._copy_btn = QPushButton("Copy")
         self._copy_btn.setFixedWidth(100)
         btn_row.addWidget(self._copy_btn)
         addr_card.layout().addLayout(btn_row)

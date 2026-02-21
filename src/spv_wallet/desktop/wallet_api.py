@@ -94,6 +94,9 @@ class WalletAPI(QObject):
     tx_recorded = Signal(dict)
     health_updated = Signal(dict)
     xpub_registered = Signal(str)  # xpub_id
+    destinations_updated = Signal(list)  # list[dict] of destinations/keys
+    utxos_updated = Signal(list)  # list[dict] of UTXOs
+    contacts_updated = Signal(list)  # list[dict] of contacts
 
     # Errors
     error_occurred = Signal(str, str)  # title, detail
@@ -245,6 +248,206 @@ class WalletAPI(QObject):
 
     def _on_address(self, result: tuple[str, str]) -> None:
         self.address_generated.emit(result[0], result[1])
+
+    # ------------------------------------------------------------------
+    # Destinations (keys)
+    # ------------------------------------------------------------------
+
+    def refresh_destinations(self) -> None:
+        """Fetch all derived destinations for the active xPub."""
+        if not self._xpub_id:
+            return
+        self._run(
+            self._do_get_destinations,
+            self._xpub_id,
+            on_done=self._on_destinations,
+        )
+
+    async def _do_get_destinations(
+        self,
+        xpub_id_val: str,
+    ) -> list[dict[str, Any]]:
+        dests = await self._engine.destination_service.get_destinations_by_xpub(
+            xpub_id_val,
+        )
+        return [
+            {
+                "id": d.id,
+                "address": d.address,
+                "type": d.type,
+                "chain": d.chain,
+                "num": d.num,
+                "locking_script": d.locking_script,
+            }
+            for d in dests
+        ]
+
+    def _on_destinations(self, dests: list[dict[str, Any]]) -> None:
+        self.destinations_updated.emit(dests)
+
+    # ------------------------------------------------------------------
+    # UTXOs
+    # ------------------------------------------------------------------
+
+    def refresh_utxos(self, *, unspent_only: bool = False) -> None:
+        """Fetch UTXOs for the active xPub.
+
+        Args:
+            unspent_only: If *True*, return only unspent outputs.
+        """
+        if not self._xpub_id:
+            return
+        self._run(
+            self._do_get_utxos,
+            self._xpub_id,
+            unspent_only,
+            on_done=self._on_utxos,
+        )
+
+    async def _do_get_utxos(
+        self,
+        xpub_id_val: str,
+        unspent_only: bool,
+    ) -> list[dict[str, Any]]:
+        utxos = await self._engine.utxo_service.get_utxos(
+            xpub_id=xpub_id_val,
+            unspent_only=unspent_only,
+        )
+        return [
+            {
+                "id": u.id,
+                "transaction_id": u.transaction_id,
+                "output_index": u.output_index,
+                "satoshis": u.satoshis,
+                "type": u.type,
+                "spending_tx_id": u.spending_tx_id,
+                "destination_id": u.destination_id,
+                "is_spent": u.is_spent,
+            }
+            for u in utxos
+        ]
+
+    def _on_utxos(self, utxos: list[dict[str, Any]]) -> None:
+        self.utxos_updated.emit(utxos)
+
+    # ------------------------------------------------------------------
+    # Contacts
+    # ------------------------------------------------------------------
+
+    def refresh_contacts(self) -> None:
+        """Fetch all contacts for the active xPub."""
+        if not self._xpub_id:
+            return
+        self._run(
+            self._do_get_contacts,
+            self._xpub_id,
+            on_done=self._on_contacts,
+        )
+
+    async def _do_get_contacts(
+        self,
+        xpub_id_val: str,
+    ) -> list[dict[str, Any]]:
+        contacts = await self._engine.contact_service.search_contacts(
+            xpub_id=xpub_id_val,
+        )
+        return [
+            {
+                "id": c.id,
+                "full_name": c.full_name,
+                "paymail": c.paymail,
+                "pub_key": c.pub_key,
+                "status": c.status,
+            }
+            for c in contacts
+        ]
+
+    def _on_contacts(self, contacts: list[dict[str, Any]]) -> None:
+        self.contacts_updated.emit(contacts)
+
+    def create_contact(
+        self,
+        paymail: str,
+        full_name: str = "",
+        pub_key: str = "",
+    ) -> None:
+        """Create a new contact.
+
+        Args:
+            paymail: Contact paymail address.
+            full_name: Display name.
+            pub_key: Public key hex string.
+        """
+        if not self._xpub_id:
+            return
+        self._run(
+            self._do_create_contact,
+            self._xpub_id,
+            paymail,
+            full_name,
+            pub_key,
+            on_done=lambda _: self.refresh_contacts(),
+        )
+
+    async def _do_create_contact(
+        self,
+        xpub_id_val: str,
+        paymail: str,
+        full_name: str,
+        pub_key: str,
+    ) -> dict[str, Any]:
+        c = await self._engine.contact_service.create_contact(
+            xpub_id_val,
+            paymail,
+            full_name=full_name,
+            pub_key=pub_key,
+        )
+        return {"id": c.id, "paymail": c.paymail, "status": c.status}
+
+    def update_contact_status(
+        self,
+        contact_id: str,
+        new_status: str,
+    ) -> None:
+        """Change a contact's status.
+
+        Args:
+            contact_id: The contact ID.
+            new_status: Target status (awaiting / confirmed / rejected).
+        """
+        self._run(
+            self._do_update_contact_status,
+            contact_id,
+            new_status,
+            on_done=lambda _: self.refresh_contacts(),
+        )
+
+    async def _do_update_contact_status(
+        self,
+        contact_id: str,
+        new_status: str,
+    ) -> dict[str, Any]:
+        c = await self._engine.contact_service.update_status(
+            contact_id,
+            new_status,
+        )
+        return {"id": c.id, "status": c.status}
+
+    def delete_contact(self, contact_id: str) -> None:
+        """Delete a contact.
+
+        Args:
+            contact_id: The contact ID to delete.
+        """
+        self._run(
+            self._do_delete_contact,
+            contact_id,
+            on_done=lambda _: self.refresh_contacts(),
+        )
+
+    async def _do_delete_contact(self, contact_id: str) -> bool:
+        await self._engine.contact_service.delete_contact(contact_id)
+        return True
 
     # ------------------------------------------------------------------
     # Transactions

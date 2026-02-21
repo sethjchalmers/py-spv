@@ -17,7 +17,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from PySide6.QtGui import QKeySequence
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont, QKeySequence
 from PySide6.QtWidgets import (
     QApplication,
     QHBoxLayout,
@@ -170,7 +171,27 @@ def _mnemonic_to_xpub(words: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-_BTN_STYLE = "font-size: 14px; padding: 8px;"
+_BTN_STYLE = (
+    "QPushButton {"
+    "  font-size: 14px;"
+    "  padding: 10px 20px;"
+    "  border: 1px solid #555;"
+    "  border-radius: 4px;"
+    "  background-color: #2d2d2d;"
+    "  color: #eee;"
+    "}"
+    "QPushButton:hover {"
+    "  background-color: #3a3a3a;"
+    "  border-color: #888;"
+    "}"
+    "QPushButton:pressed {"
+    "  background-color: #1a1a1a;"
+    "}"
+    "QPushButton:disabled {"
+    "  color: #666;"
+    "  border-color: #444;"
+    "}"
+)
 
 
 class ModePage(QWizardPage):
@@ -180,15 +201,27 @@ class ModePage(QWizardPage):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setTitle("Wallet Setup")
-        self.setSubTitle("Open a wallet you've already created, or set up a new one.")
+        self.setTitle("")
+        self.setSubTitle("")
 
         layout = QVBoxLayout(self)
-        layout.setSpacing(10)
+        layout.setSpacing(12)
+        layout.setContentsMargins(40, 20, 40, 20)
+
+        # ── Big centred title ──
+        title = QLabel("Py-SPV Wallet")
+        title_font = QFont()
+        title_font.setPointSize(28)
+        title_font.setBold(True)
+        title.setFont(title_font)
+        title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout.addWidget(title)
+
+        layout.addSpacing(24)
 
         # ── Existing wallets section (hidden when none exist) ──
-        self._existing_label = QLabel("Your wallets:")
-        self._existing_label.setStyleSheet("font-weight: 600; font-size: 14px;")
+        self._existing_label = QLabel("Existing Wallets")
+        self._existing_label.setStyleSheet("font-weight: 600; font-size: 13px; color: #aaa;")
         layout.addWidget(self._existing_label)
 
         self._wallet_list = QListWidget()
@@ -196,26 +229,24 @@ class ModePage(QWizardPage):
         self._wallet_list.setStyleSheet("font-size: 14px; padding: 4px;")
         layout.addWidget(self._wallet_list)
 
-        self._open_btn = QPushButton("📂  Open Selected Wallet")
+        self._open_btn = QPushButton("Open Selected Wallet")
         self._open_btn.setStyleSheet(_BTN_STYLE)
         self._open_btn.setEnabled(False)
         layout.addWidget(self._open_btn)
 
         self._separator = QLabel("")
         self._separator.setFixedHeight(1)
-        self._separator.setStyleSheet("background-color: #555;")
+        self._separator.setStyleSheet("background-color: #444;")
         layout.addWidget(self._separator)
 
-        # ── New wallet actions ──
-        action_label = QLabel("Or set up a new wallet:")
-        action_label.setStyleSheet("font-weight: 600; font-size: 14px;")
-        layout.addWidget(action_label)
+        layout.addSpacing(4)
 
-        self._create_btn = QPushButton("🆕  Create a New Wallet")
+        # ── New wallet actions ──
+        self._create_btn = QPushButton("Create New Wallet")
         self._create_btn.setStyleSheet(_BTN_STYLE)
         layout.addWidget(self._create_btn)
 
-        self._import_btn = QPushButton("📥  Import / Restore a Wallet")
+        self._import_btn = QPushButton("Import / Restore Wallet")
         self._import_btn.setStyleSheet(_BTN_STYLE)
         layout.addWidget(self._import_btn)
 
@@ -327,7 +358,7 @@ class GeneratePage(QWizardPage):
 
         # Warning
         warning = QLabel(
-            "⚠️  IMPORTANT: Write these words down on paper. Do NOT\n"
+            "IMPORTANT — Write these words down on paper. Do NOT\n"
             "screenshot or store them digitally. This is your only backup."
         )
         warning.setStyleSheet("color: #f59e0b; font-weight: 600;")
@@ -335,7 +366,7 @@ class GeneratePage(QWizardPage):
         layout.addWidget(warning)
 
         # Confirm checkbox-style button
-        self._confirm_btn = QPushButton("✓  I have written down my seed phrase")
+        self._confirm_btn = QPushButton("I have written down my seed phrase")
         self._confirm_btn.setProperty("role", "primary")
         self._confirm_btn.setCheckable(True)
         self._confirm_btn.clicked.connect(self._on_confirm)
@@ -434,8 +465,8 @@ class ImportPage(QWizardPage):
 
         # Hint
         hint = QLabel(
-            "💡  Seed phrase will derive your full wallet. xPub creates a\n"
-            "     watch-only wallet (can view & generate addresses, cannot sign)."
+            "Seed phrase will derive your full wallet. xPub creates a\n"
+            "watch-only wallet (can view and generate addresses, cannot sign)."
         )
         hint.setProperty("role", "caption")
         hint.setWordWrap(True)
