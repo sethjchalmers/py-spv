@@ -4,8 +4,6 @@
 name: Pages
 
 on:
-  push:
-    branches: [main]
   workflow_run:
     workflows: ["CI"]
     types: [completed]
@@ -24,7 +22,7 @@ jobs:
   build-site:
     name: Build Site
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' || github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - uses: actions/checkout@v4
 
