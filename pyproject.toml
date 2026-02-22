@@ -134,6 +134,7 @@ known-first-party = ["spv_wallet"]
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["S101", "S105", "S106", "T20"]
 "src/spv_wallet/desktop/**/*.py" = ["N802"]  # Qt method overrides (camelCase)
+"src/spv_wallet/tools/**/*.py" = ["T20"]     # CLI tools use print()
 
 # ---------------------------------------------------------------------------
 # Mypy

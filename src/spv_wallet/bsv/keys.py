@@ -33,6 +33,10 @@ _CURVE_GEN = _CURVE.generator
 _XPUB_VERSION = b"\x04\x88\xb2\x1e"  # xpub
 _XPRV_VERSION = b"\x04\x88\xad\xe4"  # xprv
 
+# BIP32 version bytes (testnet)
+_TPUB_VERSION = b"\x04\x35\x87\xcf"  # tpub
+_TPRV_VERSION = b"\x04\x35\x83\x94"  # tprv
+
 # BIP32 seed HMAC key
 _MASTER_HMAC_KEY = b"Bitcoin seed"
 
@@ -234,6 +238,7 @@ class ExtendedKey:
         parent_fingerprint: First 4 bytes of parent's Hash160(pubkey).
         child_index: Index used in derivation.
         is_private: True if this key holds the private scalar.
+        testnet: True if this is a testnet key (tpub/tprv).
     """
 
     key: bytes
@@ -242,12 +247,16 @@ class ExtendedKey:
     parent_fingerprint: bytes
     child_index: int
     is_private: bool
+    testnet: bool = False
 
     # -- Serialization -----------------------------------------------------
 
     def serialize(self) -> bytes:
         """Serialize to the 78-byte BIP32 format."""
-        version = _XPRV_VERSION if self.is_private else _XPUB_VERSION
+        if self.is_private:
+            version = _TPRV_VERSION if self.testnet else _XPRV_VERSION
+        else:
+            version = _TPUB_VERSION if self.testnet else _XPUB_VERSION
         data = version
         data += struct.pack("B", self.depth)
         data += self.parent_fingerprint
@@ -273,8 +282,16 @@ class ExtendedKey:
         version = data[:4]
         if version == _XPRV_VERSION:
             is_private = True
+            testnet = False
         elif version == _XPUB_VERSION:
             is_private = False
+            testnet = False
+        elif version == _TPRV_VERSION:
+            is_private = True
+            testnet = True
+        elif version == _TPUB_VERSION:
+            is_private = False
+            testnet = True
         else:
             msg = f"Unknown version bytes: {version.hex()}"
             raise ValueError(msg)
@@ -290,6 +307,7 @@ class ExtendedKey:
             parent_fingerprint=parent_fp,
             child_index=child_index,
             is_private=is_private,
+            testnet=testnet,
         )
 
     # -- Derivation --------------------------------------------------------
@@ -315,6 +333,7 @@ class ExtendedKey:
             parent_fingerprint=self.parent_fingerprint,
             child_index=self.child_index,
             is_private=False,
+            testnet=self.testnet,
         )
 
     def derive_child(self, index: int) -> ExtendedKey:
@@ -361,6 +380,7 @@ class ExtendedKey:
                 parent_fingerprint=fp,
                 child_index=index,
                 is_private=True,
+                testnet=self.testnet,
             )
         else:
             # Public key derivation: point(il) + parent_pubkey
@@ -378,6 +398,7 @@ class ExtendedKey:
                 parent_fingerprint=fp,
                 child_index=index,
                 is_private=False,
+                testnet=self.testnet,
             )
 
     def derive_path(self, path: str) -> ExtendedKey:
@@ -399,11 +420,12 @@ class ExtendedKey:
         return key
 
     @classmethod
-    def from_seed(cls, seed: bytes) -> ExtendedKey:
+    def from_seed(cls, seed: bytes, *, testnet: bool = False) -> ExtendedKey:
         """Create a master private extended key from a BIP32 seed.
 
         Args:
             seed: 16-64 byte seed (typically 32 from BIP39 mnemonic).
+            testnet: If True, create a testnet key (tprv prefix).
 
         Raises:
             ValueError: If seed length is out of range.
@@ -424,6 +446,7 @@ class ExtendedKey:
             parent_fingerprint=b"\x00\x00\x00\x00",
             child_index=0,
             is_private=True,
+            testnet=testnet,
         )
 
 

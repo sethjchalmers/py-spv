@@ -101,12 +101,19 @@ class WalletAPI(QObject):
     # Errors
     error_occurred = Signal(str, str)  # title, detail
 
+    # WoC scanning
+    woc_balance_updated = Signal(dict)  # {"confirmed": int, "unconfirmed": int}
+    woc_utxos_updated = Signal(list)  # list[dict] from WhatsOnChain
+    network_changed = Signal(str)  # "mainnet" or "testnet"
+
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self._engine: Any = None  # SPVWalletEngine (lazy import)
         self._pool = QThreadPool.globalInstance()
         self._raw_xpub: str = ""  # raw xPub Base58 string
         self._xpub_id: str = ""  # sha256 hash of xPub
+        self._testnet: bool = False  # network mode
+        self._woc: Any = None  # WoCClient (lazy import)
 
     # ------------------------------------------------------------------
     # Properties
@@ -116,6 +123,11 @@ class WalletAPI(QObject):
     def is_ready(self) -> bool:
         """Check if the engine is initialized."""
         return self._engine is not None and self._engine.is_initialized
+
+    @property
+    def is_testnet(self) -> bool:
+        """Whether the wallet is in testnet mode."""
+        return self._testnet
 
     @property
     def xpub_id(self) -> str:
@@ -149,24 +161,40 @@ class WalletAPI(QObject):
     # Lifecycle
     # ------------------------------------------------------------------
 
-    def initialize(self, wallet_path: str | Path) -> None:
+    def initialize(self, wallet_path: str | Path, *, testnet: bool = False) -> None:
         """Initialize the engine with a wallet file (SQLite).
 
         Args:
             wallet_path: Path to the wallet ``.sqlite`` database file.
+            testnet: If True, run in testnet mode.
         """
-        self._run(self._do_initialize, str(wallet_path), on_done=self._on_initialized)
+        self._testnet = testnet
+        self._run(
+            self._do_initialize, str(wallet_path), testnet, on_done=self._on_initialized
+        )
 
-    async def _do_initialize(self, wallet_path: str) -> bool:
-        from spv_wallet.config.settings import AppConfig, DatabaseConfig, DatabaseEngine
+    async def _do_initialize(self, wallet_path: str, testnet: bool) -> bool:
+        from spv_wallet.config.settings import (
+            AppConfig,
+            DatabaseConfig,
+            DatabaseEngine,
+            Network,
+        )
         from spv_wallet.engine.client import SPVWalletEngine
 
         dsn = f"sqlite+aiosqlite:///{wallet_path}"
         config = AppConfig(
             db=DatabaseConfig(engine=DatabaseEngine.SQLITE, dsn=dsn),
+            network=Network.TESTNET if testnet else Network.MAINNET,
         )
         self._engine = SPVWalletEngine(config)
         await self._engine.initialize()
+
+        # Create WoC client for live chain data
+        from spv_wallet.chain.woc.client import WoCClient
+
+        self._woc = WoCClient(testnet=testnet)
+        await self._woc.connect()
         return True
 
     def _on_initialized(self, _result: Any) -> None:
@@ -178,12 +206,16 @@ class WalletAPI(QObject):
             self._run(self._do_shutdown, on_done=self._on_shutdown)
 
     async def _do_shutdown(self) -> bool:
+        if self._woc:
+            await self._woc.close()
+            self._woc = None
         if self._engine:
             await self._engine.close()
         return True
 
     def _on_shutdown(self, _result: Any) -> None:
         self._engine = None
+        self._woc = None
         self.engine_closed.emit()
 
     # ------------------------------------------------------------------
@@ -575,6 +607,52 @@ class WalletAPI(QObject):
 
     def _on_tx_recorded(self, info: dict[str, Any]) -> None:
         self.tx_recorded.emit(info)
+
+    # ------------------------------------------------------------------
+    # WhatsOnChain — live chain scanning
+    # ------------------------------------------------------------------
+
+    def scan_address_balance(self, address: str) -> None:
+        """Fetch balance for an address via WhatsOnChain.
+
+        Args:
+            address: P2PKH address to scan.
+        """
+        if not self._woc:
+            return
+        self._run(self._do_woc_balance, address, on_done=self._on_woc_balance)
+
+    async def _do_woc_balance(self, address: str) -> dict[str, Any]:
+        bal = await self._woc.get_balance(address)
+        return {"confirmed": bal.confirmed, "unconfirmed": bal.unconfirmed}
+
+    def _on_woc_balance(self, info: dict[str, Any]) -> None:
+        self.woc_balance_updated.emit(info)
+
+    def scan_address_utxos(self, address: str) -> None:
+        """Fetch UTXOs for an address via WhatsOnChain.
+
+        Args:
+            address: P2PKH address to scan.
+        """
+        if not self._woc:
+            return
+        self._run(self._do_woc_utxos, address, on_done=self._on_woc_utxos)
+
+    async def _do_woc_utxos(self, address: str) -> list[dict[str, Any]]:
+        utxos = await self._woc.get_utxos(address)
+        return [
+            {
+                "tx_hash": u.tx_hash,
+                "tx_pos": u.tx_pos,
+                "value": u.value,
+                "height": u.height,
+            }
+            for u in utxos
+        ]
+
+    def _on_woc_utxos(self, utxos: list[dict[str, Any]]) -> None:
+        self.woc_utxos_updated.emit(utxos)
 
     # ------------------------------------------------------------------
     # Health

@@ -283,6 +283,13 @@ class SPVWalletEngine:
         return self._config
 
     @property
+    def is_testnet(self) -> bool:
+        """Whether the engine is configured for BSV testnet."""
+        from spv_wallet.config.settings import Network
+
+        return self._config.network == Network.TESTNET
+
+    @property
     def xpub_service(self) -> XPubService:
         """Get the xPub service."""
         if self._xpub_service is None:

@@ -17,6 +17,7 @@ from spv_wallet.config.settings import (
     DatabaseConfig,
     DatabaseEngine,
     MetricsConfig,
+    Network,
     PaymailConfig,
     ServerConfig,
     TaskConfig,
@@ -307,3 +308,28 @@ class TestCustomConstruction:
         assert cfg.db.table_prefix == "app_"
         assert cfg.cache.engine == CacheEngine.REDIS
         assert cfg.cache.ttl_seconds == 600
+
+
+class TestNetwork:
+    """Network enum and AppConfig.network field."""
+
+    def test_default_is_mainnet(self) -> None:
+        cfg = AppConfig()
+        assert cfg.network == Network.MAINNET
+
+    def test_set_testnet(self) -> None:
+        cfg = AppConfig(network=Network.TESTNET)
+        assert cfg.network == Network.TESTNET
+        assert cfg.network == "testnet"
+
+    def test_set_mainnet_string(self) -> None:
+        cfg = AppConfig(network="mainnet")
+        assert cfg.network == Network.MAINNET
+
+    def test_set_testnet_string(self) -> None:
+        cfg = AppConfig(network="testnet")
+        assert cfg.network == Network.TESTNET
+
+    def test_network_values(self) -> None:
+        assert Network.MAINNET.value == "mainnet"
+        assert Network.TESTNET.value == "testnet"

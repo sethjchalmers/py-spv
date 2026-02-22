@@ -9,6 +9,7 @@ from sqlalchemy import select
 from spv_wallet.bsv.address import pubkey_to_address
 from spv_wallet.bsv.keys import ExtendedKey
 from spv_wallet.bsv.script import p2pkh_lock_script_from_pubkey
+from spv_wallet.config.settings import Network
 from spv_wallet.engine.models.destination import Destination
 from spv_wallet.errors.spv_errors import SPVError
 from spv_wallet.utils.crypto import sha256
@@ -32,6 +33,11 @@ class DestinationService:
 
     def __init__(self, engine: SPVWalletEngine) -> None:
         self._engine = engine
+
+    @property
+    def _testnet(self) -> bool:
+        """Whether the engine is configured for testnet."""
+        return self._engine.config.network == Network.TESTNET
 
     # ------------------------------------------------------------------
     # Public API
@@ -70,7 +76,7 @@ class DestinationService:
         pubkey = child.public_key()
 
         # Generate address and locking script
-        address = pubkey_to_address(pubkey)
+        address = pubkey_to_address(pubkey, testnet=self._testnet)
         locking_script = p2pkh_lock_script_from_pubkey(pubkey)
         locking_script_hex = locking_script.hex()
 
@@ -123,7 +129,7 @@ class DestinationService:
         child = xpub_key.derive_child(chain).derive_child(num)
         pubkey = child.public_key()
 
-        address = pubkey_to_address(pubkey)
+        address = pubkey_to_address(pubkey, testnet=self._testnet)
         locking_script = p2pkh_lock_script_from_pubkey(pubkey)
         locking_script_hex = locking_script.hex()
         dest_id = sha256(locking_script_hex.encode("utf-8")).hex()

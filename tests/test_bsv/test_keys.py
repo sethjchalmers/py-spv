@@ -286,3 +286,84 @@ class TestXPubId:
         id1 = xpub_id(master.neuter().to_string())
         id2 = xpub_id(child.neuter().to_string())
         assert id1 != id2
+
+
+class TestTestnetKeys:
+    """BIP32 testnet key support (tpub/tprv)."""
+
+    def test_from_seed_testnet_flag(self) -> None:
+        master = ExtendedKey.from_seed(_SEED_1, testnet=True)
+        assert master.testnet is True
+        assert master.is_private is True
+
+    def test_mainnet_default_flag(self) -> None:
+        master = ExtendedKey.from_seed(_SEED_1)
+        assert master.testnet is False
+
+    def test_tprv_prefix(self) -> None:
+        master = ExtendedKey.from_seed(_SEED_1, testnet=True)
+        s = master.to_string()
+        assert s.startswith("tprv")
+
+    def test_tpub_prefix(self) -> None:
+        master = ExtendedKey.from_seed(_SEED_1, testnet=True)
+        pub = master.neuter()
+        s = pub.to_string()
+        assert s.startswith("tpub")
+
+    def test_roundtrip_tprv(self) -> None:
+        master = ExtendedKey.from_seed(_SEED_1, testnet=True)
+        s = master.to_string()
+        restored = ExtendedKey.from_string(s)
+        assert restored.key == master.key
+        assert restored.chain_code == master.chain_code
+        assert restored.is_private is True
+        assert restored.testnet is True
+
+    def test_roundtrip_tpub(self) -> None:
+        master = ExtendedKey.from_seed(_SEED_1, testnet=True)
+        pub = master.neuter()
+        s = pub.to_string()
+        restored = ExtendedKey.from_string(s)
+        assert restored.key == pub.key
+        assert restored.is_private is False
+        assert restored.testnet is True
+
+    def test_testnet_propagates_through_derivation(self) -> None:
+        master = ExtendedKey.from_seed(_SEED_1, testnet=True)
+        child = master.derive_child(0)
+        assert child.testnet is True
+        grandchild = child.derive_child(1)
+        assert grandchild.testnet is True
+
+    def test_testnet_propagates_through_hardened(self) -> None:
+        master = ExtendedKey.from_seed(_SEED_1, testnet=True)
+        child = master.derive_child(0x80000000)
+        assert child.testnet is True
+
+    def test_testnet_propagates_through_path(self) -> None:
+        master = ExtendedKey.from_seed(_SEED_1, testnet=True)
+        child = master.derive_path("m/44'/236'/0'/0/0")
+        assert child.testnet is True
+        s = child.to_string()
+        assert s.startswith("tprv")
+
+    def test_testnet_neuter_propagates(self) -> None:
+        master = ExtendedKey.from_seed(_SEED_1, testnet=True)
+        child = master.derive_path("m/44'/236'/0'")
+        pub = child.neuter()
+        assert pub.testnet is True
+        assert pub.to_string().startswith("tpub")
+
+    def test_mainnet_key_still_produces_xpub_xprv(self) -> None:
+        """Ensure existing mainnet behaviour unchanged."""
+        master = ExtendedKey.from_seed(_SEED_1)
+        assert master.to_string() == _XPRV_M
+        assert master.neuter().to_string() == _XPUB_M
+
+    def test_public_derivation_propagates_testnet(self) -> None:
+        master = ExtendedKey.from_seed(_SEED_1, testnet=True)
+        pub = master.neuter()
+        child = pub.derive_child(0)
+        assert child.testnet is True
+        assert not child.is_private

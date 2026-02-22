@@ -45,6 +45,13 @@ class ArcWaitFor(enum.StrEnum):
     SENT_TO_NETWORK = "SENT_TO_NETWORK"
 
 
+class Network(enum.StrEnum):
+    """BSV network selection."""
+
+    MAINNET = "mainnet"
+    TESTNET = "testnet"
+
+
 # ---------------------------------------------------------------------------
 # Sub-config models
 # ---------------------------------------------------------------------------
@@ -231,6 +238,7 @@ class AppConfig(BaseSettings):
 
     debug: bool = False
     version: str = "0.1.0"
+    network: Network = Network.MAINNET
     admin_xpub: str = ""
     encryption_key: str = ""
     config_path: str = ""
